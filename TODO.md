@@ -103,7 +103,16 @@ that repo's README.md and supabase/schema.sql for the pattern being mimicked.
       (matches supabase-js 2.58.0's expectations; the sb_publishable_ key
       Anthony also has is a one-line swap later if the legacy format is
       ever retired).
-- [ ] GitHub repo push, enable Pages, point Namecheap CNAME, enforce HTTPS
+- [x] **Site is live** (05 Sep 2026) — `http://stosupplyco.com` returns 200,
+      confirmed by direct request. Repo pushed to
+      `AntJohnson-25/stosupplyco.com`, Namecheap DNS (4 A records + www
+      CNAME) done, GitHub Pages source fixed from the "GitHub Actions"
+      default (no workflow file, so nothing built) to "Deploy from a
+      branch" / `main` / root — that was the actual cause of the
+      "improperly configured" error, not DNS. An empty commit forced the
+      first real build.
+- [x] **HTTPS enforced** (05 Sep 2026) — `https://stosupplyco.com` confirmed
+      returning 200 with a valid cert. Admin/deploy work is done.
 - [ ] Build the actual feed/composer/reactions front end into `index.html`
-      against this schema (currently only has the profile carousel
+      against the Supabase schema (currently only has the profile carousel
       prototype)
