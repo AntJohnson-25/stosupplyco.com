@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>STO Supply Co</title>
+<style>
+:root{
+  --bg:#141414; --surface:#1c1c1c; --line:#2c2c2c;
+  --ink:#f2efe9; --ink-2:#cfc9bd; --muted:#8a8378;
+  --maroon:#7a1f2b; --maroon-lt:#a83244;
+  --r:10px; --font:"MS Sans Serif","Tahoma","Segoe UI",sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font);font-size:13px;line-height:1.6;background:var(--bg);color:var(--ink);min-height:100vh}
+[hidden]{display:none!important}
+
+.page{
+  max-width:1180px;margin:0 auto;padding:22px 18px 60px;
+  display:grid;gap:18px;
+  grid-template-columns:220px minmax(0,1fr);
+  grid-template-areas:"profile main";
+  align-items:start;
+}
+.profile-col{grid-area:profile;display:flex;flex-direction:column;gap:18px}
+main{grid-area:main}
+.box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
+
+/* ── profile ─────────────────────────────────────────────── */
+#profile{padding:12px}
+#profile .name{font-size:15px;font-weight:700;color:var(--ink);margin-top:9px}
+#profile .role{color:var(--muted);margin-top:1px}
+#profile .bio{color:var(--ink-2);margin-top:8px;line-height:1.55;font-size:12px}
+
+/* ── carousel, dropped in where the single avatar shot sat ─── */
+.carousel{
+  position:relative;width:100%;aspect-ratio:1;border-radius:var(--r);
+  overflow:hidden;border:1px solid var(--line);background:#000;
+}
+.carousel .track{
+  display:flex;height:100%;width:100%;transition:transform .35s ease;
+}
+.carousel .slide{flex:0 0 100%;height:100%}
+.carousel .slide img{width:100%;height:100%;object-fit:cover;display:block}
+
+.carousel .nav{
+  position:absolute;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;border-radius:50%;border:0;cursor:pointer;
+  background:rgba(0,0,0,.45);color:#fff;font-size:14px;line-height:1;
+  display:flex;align-items:center;justify-content:center;
+}
+.carousel .nav:hover{background:rgba(0,0,0,.7)}
+.carousel .nav.prev{left:8px}
+.carousel .nav.next{right:8px}
+
+.carousel .dots{
+  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  display:flex;gap:6px;
+}
+.carousel .dots button{
+  width:7px;height:7px;border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:rgba(255,255,255,.4);
+}
+.carousel .dots button[aria-current="true"]{background:var(--maroon-lt)}
+
+@media (max-width:640px){
+  .page{grid-template-columns:1fr;grid-template-areas:"profile" "main"}
+  .profile-col{flex-direction:row;align-items:flex-start;gap:12px}
+  .carousel{width:110px;flex-shrink:0}
+  #profile{display:flex;gap:12px;align-items:flex-start;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="profile-col">
+    <aside class="box" id="profile">
+      <div class="carousel" id="carousel">
+        <div class="track" id="carouselTrack">
+          <div class="slide"><img src="assets/sto-01.jpg" alt="STO Supply Co"/></div>
+          <div class="slide"><img src="assets/sto-02.jpg" alt="STO Supply Co"/></div>
+        </div>
+        <button class="nav prev" id="carouselPrev" aria-label="Previous image">&#8249;</button>
+        <button class="nav next" id="carouselNext" aria-label="Next image">&#8250;</button>
+        <div class="dots" id="carouselDots"></div>
+      </div>
+      <div class="name">STO Supply Co</div>
+      <div class="role">placeholder role/tagline</div>
+      <div class="bio">placeholder bio — swap in real copy once the client sends it.</div>
+    </aside>
+  </div>
+
+  <main>
+    <div class="box" style="padding:16px;color:var(--muted)">Feed goes here.</div>
+  </main>
+
+</div>
+
+<script>
+(function(){
+  const track = document.getElementById('carouselTrack');
+  const slides = track.querySelectorAll('.slide');
+  const dotsWrap = document.getElementById('carouselDots');
+  const prevBtn = document.getElementById('carouselPrev');
+  const nextBtn = document.getElementById('carouselNext');
+  let i = 0;
+  let timer = null;
+
+  slides.forEach((_, idx) => {
+    const b = document.createElement('button');
+    b.setAttribute('aria-label', 'Go to image ' + (idx + 1));
+    b.addEventListener('click', () => go(idx));
+    dotsWrap.appendChild(b);
+  });
+  const dots = dotsWrap.querySelectorAll('button');
+
+  function render(){
+    track.style.transform = 'translateX(-' + (i * 100) + '%)';
+    dots.forEach((d, idx) => d.setAttribute('aria-current', idx === i ? 'true' : 'false'));
+  }
+  function go(n){
+    i = (n + slides.length) % slides.length;
+    render();
+    restart();
+  }
+  function restart(){
+    if (timer) clearInterval(timer);
+    if (slides.length > 1) timer = setInterval(() => go(i + 1), 4000);
+  }
+
+  prevBtn.addEventListener('click', () => go(i - 1));
+  nextBtn.addEventListener('click', () => go(i + 1));
+  render();
+  restart();
+})();
+</script>
+</body>
+</html>
