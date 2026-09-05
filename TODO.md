@@ -70,15 +70,33 @@ that repo's README.md and supabase/schema.sql for the pattern being mimicked.
       mobile. No feed/backend wiring yet — verified standalone in-browser via
       a local static server. Placeholder name/role/bio text still needs real
       copy from the client.
-- [ ] `supabase/schema.sql` — posts (caption-based), post_assets, comments,
-      reactions, events tables + functions, adapted from
-      `F:\fred-seniorsecured.org\supabase\schema.sql`
-- [ ] `supabase/authors.sql` — two-author allowlist
-- [ ] `supabase/post-images.sql` — storage bucket + policies for photo/video
-      uploads (and embed rows if that decision is confirmed)
-- [ ] Feed view, single-post `/p/<slug>` view, composer, reaction bar,
-      comments, dashboard — build into `index.html` alongside the carousel
-- [ ] `config.js`, `404.html`, `CNAME`, `.nojekyll` — same as Fred's site
+- [x] `supabase/schema.sql`, `authors.sql`, `post-images.sql` — written and
+      applied to the live project (see setup queue below)
+- [x] `config.js`, `404.html`, `CNAME`, `.nojekyll` — written and deployed
+- [x] **Full front end built** (05 Sep 2026) — `index.html` now has:
+      - Feed: reverse-chron post cards (caption, gallery carousel,
+        reaction bar, comment/view counts), shareable `/p/<slug>` URLs
+      - Single-post view: full gallery, true per-kind reaction counts,
+        comments list + form, fires a `view` event once per session
+      - Reactions: 👍/🔥/💯 (like/fire/hundred), toggled via
+        `toggle_reaction`, pressed state tracked client-side
+      - Composer (author-only): caption, multi-file photo/video upload to
+        `post-media`, add-a-Facebook-Reel-link field, draft or publish
+      - Auth: sign in/out, gated on the `authors` allowlist — a valid
+        login that isn't an author gets signed back out with an
+        explanation
+      - Dashboard (author-only): 30-day totals, daily views, per-post
+        performance, recent comments via `analytics()`
+      - Client-side router (`/`, `/signin`, `/compose`, `/dashboard`,
+        `/p/<slug>`) + the `404.html` deep-link restore on boot
+      - Verified live against the deployed Supabase project: empty feed
+        state renders correctly, `/signin` round-trips to Supabase Auth
+        and cleanly surfaces "Invalid login credentials" on a bad login.
+      - **Not yet tested**: the actual sign-in → compose → upload →
+        publish → react → comment path, since that needs a real author
+        password (Anthony's or the client's) that Claude doesn't hold.
+        Anthony should smoke-test this next, same as Fred's own
+        first-post smoke test.
 
 ## Anthony's (or client's) setup queue
 
@@ -113,6 +131,16 @@ that repo's README.md and supabase/schema.sql for the pattern being mimicked.
       first real build.
 - [x] **HTTPS enforced** (05 Sep 2026) — `https://stosupplyco.com` confirmed
       returning 200 with a valid cert. Admin/deploy work is done.
-- [ ] Build the actual feed/composer/reactions front end into `index.html`
-      against the Supabase schema (currently only has the profile carousel
-      prototype)
+
+## Next up
+
+- [ ] Anthony (or the client) signs in on the live site and smoke-tests:
+      publish a post with a photo/video, react to it, leave a comment,
+      check the dashboard shows it
+- [ ] Real bio/role copy from the client (profile panel still has
+      placeholder text)
+- [ ] Decide reaction icon set/wording — currently defaulted to
+      👍/🔥/💯, not yet confirmed with the client
+- [ ] The 3 Facebook Reels in `fb_embeddedings.txt` haven't been added as
+      posts yet — composer supports it (paste the reel URL into the
+      "Facebook Reel link" field), just needs doing
