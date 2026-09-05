@@ -4,15 +4,19 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>STO Supply Co</title>
+<meta property="og:title" content="STO Supply Co"/>
+<meta property="og:type" content="website"/>
 <style>
 :root{
-  --bg:#141414; --surface:#1c1c1c; --line:#2c2c2c;
+  --bg:#141414; --surface:#1c1c1c; --surface-2:#242424; --line:#2c2c2c;
   --ink:#f2efe9; --ink-2:#cfc9bd; --muted:#8a8378;
   --maroon:#7a1f2b; --maroon-lt:#a83244;
   --r:10px; --font:"MS Sans Serif","Tahoma","Segoe UI",sans-serif;
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 body{font-family:var(--font);font-size:13px;line-height:1.6;background:var(--bg);color:var(--ink);min-height:100vh}
+button,input,textarea,select{font-family:inherit;font-size:13px;color:inherit;background:none}
+a{color:var(--maroon-lt)}
 [hidden]{display:none!important}
 
 .page{
@@ -22,8 +26,8 @@ body{font-family:var(--font);font-size:13px;line-height:1.6;background:var(--bg)
   grid-template-areas:"profile main";
   align-items:start;
 }
-.profile-col{grid-area:profile;display:flex;flex-direction:column;gap:18px}
-main{grid-area:main}
+.profile-col{grid-area:profile;display:flex;flex-direction:column;gap:18px;position:sticky;top:22px}
+main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 
 /* ── profile ─────────────────────────────────────────────── */
@@ -31,17 +35,23 @@ main{grid-area:main}
 #profile .name{font-size:15px;font-weight:700;color:var(--ink);margin-top:9px}
 #profile .role{color:var(--muted);margin-top:1px}
 #profile .bio{color:var(--ink-2);margin-top:8px;line-height:1.55;font-size:12px}
+#profileFooter{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);
+  display:flex;flex-direction:column;gap:6px}
+#profileFooter button, #profileFooter a{
+  text-align:left;background:none;border:0;color:var(--ink-2);cursor:pointer;
+  padding:2px 0;font-size:12px}
+#profileFooter button:hover, #profileFooter a:hover{color:var(--ink)}
+#whoami{font-size:11px;color:var(--muted);margin-top:2px}
 
-/* ── carousel, dropped in where the single avatar shot sat ─── */
+/* ── carousel (profile shot + post galleries share this) ───── */
 .carousel{
   position:relative;width:100%;aspect-ratio:1;border-radius:var(--r);
   overflow:hidden;border:1px solid var(--line);background:#000;
 }
-.carousel .track{
-  display:flex;height:100%;width:100%;transition:transform .35s ease;
-}
-.carousel .slide{flex:0 0 100%;height:100%}
-.carousel .slide img{width:100%;height:100%;object-fit:cover;display:block}
+.carousel .track{display:flex;height:100%;width:100%;transition:transform .35s ease}
+.carousel .slide{flex:0 0 100%;height:100%;display:flex;align-items:center;justify-content:center;background:#000}
+.carousel .slide img,.carousel .slide video{width:100%;height:100%;object-fit:cover;display:block}
+.carousel .slide iframe{width:100%;height:100%;border:0}
 
 .carousel .nav{
   position:absolute;top:50%;transform:translateY(-50%);
@@ -53,21 +63,108 @@ main{grid-area:main}
 .carousel .nav.prev{left:8px}
 .carousel .nav.next{right:8px}
 
-.carousel .dots{
-  position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
-  display:flex;gap:6px;
-}
-.carousel .dots button{
-  width:7px;height:7px;border-radius:50%;border:0;padding:0;cursor:pointer;
-  background:rgba(255,255,255,.4);
-}
+.carousel .dots{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
+.carousel .dots button{width:7px;height:7px;border-radius:50%;border:0;padding:0;cursor:pointer;background:rgba(255,255,255,.4)}
 .carousel .dots button[aria-current="true"]{background:var(--maroon-lt)}
+
+/* ── feed / post cards ──────────────────────────────────────── */
+.post{padding:14px}
+.post .head{display:flex;align-items:baseline;gap:8px;margin-bottom:8px}
+.post .head .author{font-weight:700}
+.post .head .when{color:var(--muted);font-size:11px}
+.post .head .draft-tag{margin-left:auto;font-size:10px;text-transform:uppercase;
+  letter-spacing:.5px;color:var(--maroon-lt);border:1px solid var(--maroon-lt);
+  border-radius:4px;padding:1px 6px}
+.post .caption{white-space:pre-wrap;color:var(--ink-2);margin-bottom:10px;cursor:pointer}
+.post .caption:hover{color:var(--ink)}
+.post .gallery{margin-bottom:10px;max-width:420px}
+.post .gallery .carousel{aspect-ratio:4/5}
+
+.reactbar{display:flex;align-items:center;gap:14px;padding-top:6px;border-top:1px solid var(--line)}
+.reactbar .react{background:none;border:0;cursor:pointer;color:var(--muted);
+  display:flex;align-items:center;gap:5px;padding:4px 2px;font-size:12px}
+.reactbar .react:hover{color:var(--ink)}
+.reactbar .react[aria-pressed="true"]{color:var(--maroon-lt);font-weight:700}
+.reactbar .spacer{flex:1}
+.reactbar .link-btn{background:none;border:0;cursor:pointer;color:var(--muted);font-size:12px}
+.reactbar .link-btn:hover{color:var(--ink)}
+
+.comments{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.comments .c{margin-bottom:8px;font-size:12px}
+.comments .c .cname{font-weight:700;margin-right:6px}
+.comments .c .cwhen{color:var(--muted);font-size:10px}
+.comments .cbody{color:var(--ink-2)}
+.comments form{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+.comments input,.comments textarea{background:var(--surface-2);border:1px solid var(--line);
+  border-radius:6px;padding:6px 8px;color:var(--ink)}
+.comments textarea{resize:vertical;min-height:50px}
+.comments .row{display:flex;gap:6px}
+.comments .row input{flex:1}
+
+.btn{background:var(--maroon);border:0;color:#fff;border-radius:6px;padding:6px 14px;
+  cursor:pointer;font-weight:700}
+.btn:hover{background:var(--maroon-lt)}
+.btn.ghost{background:none;border:1px solid var(--line);color:var(--ink-2)}
+.btn.ghost:hover{color:var(--ink);border-color:var(--muted)}
+.btn:disabled{opacity:.5;cursor:default}
+
+.empty{padding:24px;text-align:center;color:var(--muted)}
+.hint{font-size:11px;color:var(--muted)}
+.err{color:#e08a8a;font-size:12px;margin-top:4px}
+
+/* ── auth panel ─────────────────────────────────────────────── */
+#authPanel{padding:14px}
+#authPanel form{display:flex;flex-direction:column;gap:8px;max-width:280px}
+#authPanel input{background:var(--surface-2);border:1px solid var(--line);border-radius:6px;
+  padding:7px 9px;color:var(--ink)}
+
+/* ── composer ────────────────────────────────────────────────── */
+#composer{padding:14px}
+#composer .field{margin-bottom:12px}
+#composer label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--muted);margin-bottom:5px}
+#composer textarea,#composer input[type=text]{width:100%;background:var(--surface-2);
+  border:1px solid var(--line);border-radius:6px;padding:8px;color:var(--ink)}
+#composer textarea{resize:vertical;min-height:70px}
+#assetList{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.asset-thumb{position:relative;width:70px;height:70px;border-radius:6px;overflow:hidden;
+  border:1px solid var(--line);background:#000}
+.asset-thumb img,.asset-thumb video{width:100%;height:100%;object-fit:cover}
+.asset-thumb .fb{display:flex;align-items:center;justify-content:center;height:100%;
+  color:var(--muted);font-size:10px;text-align:center;padding:4px}
+.asset-thumb .rm{position:absolute;top:1px;right:1px;background:rgba(0,0,0,.7);color:#fff;
+  border:0;border-radius:50%;width:16px;height:16px;font-size:10px;cursor:pointer;line-height:1}
+.asset-thumb .uploading{position:absolute;inset:0;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+#composer .actions{display:flex;gap:8px;align-items:center;margin-top:14px}
+
+/* ── dashboard ───────────────────────────────────────────────── */
+#dashboard{padding:14px}
+.stat-row{display:flex;gap:14px;flex-wrap:wrap;margin-bottom:16px}
+.stat{background:var(--surface-2);border:1px solid var(--line);border-radius:8px;
+  padding:10px 16px;min-width:100px}
+.stat .n{font-size:20px;font-weight:700}
+.stat .l{font-size:10px;text-transform:uppercase;color:var(--muted);letter-spacing:.5px}
+table.data{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:16px}
+table.data th{text-align:left;color:var(--muted);font-weight:400;font-size:10px;
+  text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;border-bottom:1px solid var(--line)}
+table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
+.dash-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
+  margin:14px 0 6px}
+
+/* ── toast ───────────────────────────────────────────────────── */
+#toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(50px);
+  background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
+  padding:9px 16px;border-radius:8px;font-size:12px;opacity:0;transition:all .25s ease;
+  pointer-events:none;z-index:400}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
 @media (max-width:640px){
   .page{grid-template-columns:1fr;grid-template-areas:"profile" "main"}
-  .profile-col{flex-direction:row;align-items:flex-start;gap:12px}
+  .profile-col{position:static;flex-direction:row;align-items:flex-start;gap:12px}
   .carousel{width:110px;flex-shrink:0}
-  #profile{display:flex;gap:12px;align-items:flex-start;width:100%}
+  #profile{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;width:100%}
+  #profileFooter{width:100%}
 }
 </style>
 </head>
@@ -76,63 +173,649 @@ main{grid-area:main}
 
   <div class="profile-col">
     <aside class="box" id="profile">
-      <div class="carousel" id="carousel">
-        <div class="track" id="carouselTrack">
+      <div class="carousel" id="profileCarousel">
+        <div class="track">
           <div class="slide"><img src="assets/sto-01.jpg" alt="STO Supply Co"/></div>
           <div class="slide"><img src="assets/sto-02.jpg" alt="STO Supply Co"/></div>
         </div>
-        <button class="nav prev" id="carouselPrev" aria-label="Previous image">&#8249;</button>
-        <button class="nav next" id="carouselNext" aria-label="Next image">&#8250;</button>
-        <div class="dots" id="carouselDots"></div>
       </div>
       <div class="name">STO Supply Co</div>
       <div class="role">placeholder role/tagline</div>
       <div class="bio">placeholder bio — swap in real copy once the client sends it.</div>
+      <div id="profileFooter">
+        <a href="/" id="feedLink">Feed</a>
+        <button id="composeBtn" hidden>New post</button>
+        <button id="dashboardBtn" hidden>Dashboard</button>
+        <button id="signInBtn">Sign in</button>
+        <button id="signOutBtn" hidden>Sign out</button>
+        <div id="whoami"></div>
+      </div>
     </aside>
   </div>
 
-  <main>
-    <div class="box" style="padding:16px;color:var(--muted)">Feed goes here.</div>
-  </main>
+  <main id="main"></main>
 
 </div>
 
+<div id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="config.js"></script>
 <script>
 (function(){
-  const track = document.getElementById('carouselTrack');
-  const slides = track.querySelectorAll('.slide');
-  const dotsWrap = document.getElementById('carouselDots');
-  const prevBtn = document.getElementById('carouselPrev');
-  const nextBtn = document.getElementById('carouselNext');
-  let i = 0;
-  let timer = null;
+'use strict';
 
-  slides.forEach((_, idx) => {
-    const b = document.createElement('button');
-    b.setAttribute('aria-label', 'Go to image ' + (idx + 1));
-    b.addEventListener('click', () => go(idx));
-    dotsWrap.appendChild(b);
-  });
-  const dots = dotsWrap.querySelectorAll('button');
+/* ── carousel factory — used for the profile shot and every post gallery ── */
+function initCarousel(root, autoplay){
+  const track  = root.querySelector('.track');
+  const slides = Array.from(track.children);
+  if (slides.length === 0) return;
+
+  if (slides.length > 1){
+    const prev = document.createElement('button');
+    prev.className = 'nav prev'; prev.setAttribute('aria-label','Previous'); prev.innerHTML = '&#8249;';
+    const next = document.createElement('button');
+    next.className = 'nav next'; next.setAttribute('aria-label','Next'); next.innerHTML = '&#8250;';
+    const dotsWrap = document.createElement('div');
+    dotsWrap.className = 'dots';
+    slides.forEach((_, idx) => {
+      const b = document.createElement('button');
+      b.setAttribute('aria-label', 'Go to slide ' + (idx + 1));
+      b.addEventListener('click', (e) => { e.stopPropagation(); go(idx); });
+      dotsWrap.appendChild(b);
+    });
+    prev.addEventListener('click', (e) => { e.stopPropagation(); go(i - 1); });
+    next.addEventListener('click', (e) => { e.stopPropagation(); go(i + 1); });
+    root.appendChild(prev); root.appendChild(next); root.appendChild(dotsWrap);
+  }
+  const dots = root.querySelectorAll('.dots button');
+  let i = 0, timer = null;
 
   function render(){
     track.style.transform = 'translateX(-' + (i * 100) + '%)';
     dots.forEach((d, idx) => d.setAttribute('aria-current', idx === i ? 'true' : 'false'));
   }
-  function go(n){
-    i = (n + slides.length) % slides.length;
-    render();
-    restart();
-  }
+  function go(n){ i = (n + slides.length) % slides.length; render(); restart(); }
   function restart(){
     if (timer) clearInterval(timer);
-    if (slides.length > 1) timer = setInterval(() => go(i + 1), 4000);
+    if (autoplay && slides.length > 1) timer = setInterval(() => go(i + 1), 4000);
   }
+  render(); restart();
+}
+initCarousel(document.getElementById('profileCarousel'), true);
 
-  prevBtn.addEventListener('click', () => go(i - 1));
-  nextBtn.addEventListener('click', () => go(i + 1));
-  render();
-  restart();
+/* ── guard: config.js must be filled in ─────────────────────────────── */
+const CONFIGURED = typeof window.SUPABASE_URL === 'string' && window.SUPABASE_URL.startsWith('http')
+                 && typeof window.SUPABASE_ANON_KEY === 'string' && window.SUPABASE_ANON_KEY.length > 20;
+if (!CONFIGURED){
+  document.getElementById('main').innerHTML =
+    '<div class="box empty">Supabase is not configured — check config.js.</div>';
+  return;
+}
+const supa = window.supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+
+/* ── visitor/session ids ─────────────────────────────────────────────── */
+function uuid(){
+  if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+    const r = Math.random()*16|0, v = c === 'x' ? r : (r&0x3|0x8);
+    return v.toString(16);
+  });
+}
+function visitorId(){
+  try {
+    let v = localStorage.getItem('sto_visitor');
+    if (!v){ v = uuid(); localStorage.setItem('sto_visitor', v); }
+    return v;
+  } catch(e){ return uuid(); }
+}
+function sessionId(){
+  try {
+    let s = sessionStorage.getItem('sto_session');
+    if (!s){ s = uuid(); sessionStorage.setItem('sto_session', s); }
+    return s;
+  } catch(e){ return uuid(); }
+}
+function deviceType(){
+  const w = window.innerWidth;
+  return w < 640 ? 'mobile' : w < 1024 ? 'tablet' : 'desktop';
+}
+
+/* ── small utils ─────────────────────────────────────────────────────── */
+function escapeHtml(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+function timeAgo(iso){
+  const d = new Date(iso), s = Math.floor((Date.now() - d.getTime())/1000);
+  if (s < 60) return 'just now';
+  if (s < 3600) return Math.floor(s/60) + 'm ago';
+  if (s < 86400) return Math.floor(s/3600) + 'h ago';
+  if (s < 2592000) return Math.floor(s/86400) + 'd ago';
+  return d.toLocaleDateString();
+}
+let toastTimer = null;
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+}
+
+const REACTIONS = [
+  { kind: 'like',    label: '👍' },
+  { kind: 'fire',    label: '🔥' },
+  { kind: 'hundred', label: '💯' },
+];
+
+/* ── auth state ──────────────────────────────────────────────────────── */
+let session  = null;
+let isAuthor = false;
+let myReactions = {}; // postId -> Set(kind) reacted locally this session
+
+async function refreshAuthorStatus(){
+  isAuthor = false;
+  if (!session) return;
+  const { data, error } = await supa.from('authors').select('user_id').eq('user_id', session.user.id).maybeSingle();
+  if (error){ isAuthor = false; return; }
+  isAuthor = !!data;
+}
+
+async function checkSession(){
+  const { data } = await supa.auth.getSession();
+  session = data.session || null;
+  await refreshAuthorStatus();
+  paintAuthUI();
+}
+
+function paintAuthUI(){
+  document.getElementById('composeBtn').hidden   = !isAuthor;
+  document.getElementById('dashboardBtn').hidden = !isAuthor;
+  document.getElementById('signInBtn').hidden    = !!session;
+  document.getElementById('signOutBtn').hidden   = !session;
+  document.getElementById('whoami').textContent  = session
+    ? (isAuthor ? session.user.email : session.user.email + ' (not an author)')
+    : '';
+}
+
+document.getElementById('signInBtn').addEventListener('click', () => navigate('/signin'));
+document.getElementById('signOutBtn').addEventListener('click', async () => {
+  await supa.auth.signOut();
+  session = null; isAuthor = false;
+  paintAuthUI();
+  navigate('/');
+});
+document.getElementById('composeBtn').addEventListener('click', () => navigate('/compose'));
+document.getElementById('dashboardBtn').addEventListener('click', () => navigate('/dashboard'));
+document.getElementById('feedLink').addEventListener('click', (e) => { e.preventDefault(); navigate('/'); });
+
+/* ── data access ─────────────────────────────────────────────────────── */
+async function listPosts(includeDrafts){
+  const { data, error } = await supa.rpc('list_posts', { include_drafts: !!includeDrafts });
+  if (error){ toast('Could not load posts: ' + error.message); return []; }
+  return data || [];
+}
+async function getPost(slug){
+  const { data, error } = await supa.rpc('get_post', { p_slug: slug });
+  if (error){ toast('Could not load post: ' + error.message); return null; }
+  return data;
+}
+async function toggleReaction(postId, kind){
+  const { data, error } = await supa.rpc('toggle_reaction', {
+    p_post_id: postId, p_visitor_id: visitorId(), p_kind: kind
+  });
+  if (error){ toast('Reaction failed: ' + error.message); return null; }
+  return data;
+}
+async function addComment(postId, name, body){
+  const { data, error } = await supa.rpc('add_comment', {
+    p_post_id: postId, p_name: name, p_body: body, p_visitor_id: visitorId()
+  });
+  if (error){ toast(error.message || 'Comment failed'); return null; }
+  return data;
+}
+function trackEvent(postId, type){
+  supa.rpc('track_event', {
+    p_post_id: postId, p_visitor_id: visitorId(), p_session_id: sessionId(),
+    p_type: type, p_referrer: document.referrer ? new URL(document.referrer).hostname : null,
+    p_device: deviceType()
+  }).then(()=>{}, ()=>{});
+}
+
+/* ── rendering ───────────────────────────────────────────────────────── */
+const mainEl = document.getElementById('main');
+
+// reactions: per-kind counts object (single-post view) or null (feed card,
+// where list_posts only carries a combined total, not a per-kind split)
+function reactBarHtml(postId, reactions){
+  const btns = REACTIONS.map(r => {
+    const pressed = myReactions[postId] && myReactions[postId].has(r.kind);
+    const countHtml = reactions ? ' <span class="cnt">' + (reactions[r.kind]||0) + '</span>' : '';
+    return '<button class="react" data-kind="'+r.kind+'" data-post="'+postId+'" '
+         + 'aria-pressed="'+(pressed?'true':'false')+'">'
+         + r.label + countHtml + '</button>';
+  }).join('');
+  return '<div class="reactbar">' + btns
+       + '<span class="spacer"></span>'
+       + '<button class="link-btn" data-share="' + postId + '">Share</button>'
+       + '</div>';
+}
+
+function assetHtml(a){
+  if (a.kind === 'photo') return '<div class="slide"><img src="'+escapeHtml(a.url)+'" alt="'+escapeHtml(a.alt||'')+'"/></div>';
+  if (a.kind === 'video') return '<div class="slide"><video src="'+escapeHtml(a.url)+'" controls playsinline></video></div>';
+  if (a.kind === 'facebook_embed'){
+    const src = 'https://www.facebook.com/plugins/video.php?height=476&href='
+              + encodeURIComponent(a.url) + '&show_text=false&width=267&t=0';
+    return '<div class="slide"><iframe src="'+src+'" scrolling="no" frameborder="0" '
+         + 'allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe></div>';
+  }
+  return '';
+}
+function galleryHtml(assets){
+  if (!assets || !assets.length) return '';
+  return '<div class="gallery"><div class="carousel"><div class="track">'
+       + assets.map(assetHtml).join('') + '</div></div></div>';
+}
+
+function postCardHtml(p){
+  return '<article class="box post" data-slug="'+escapeHtml(p.slug)+'" data-id="'+p.id+'">'
+    + '<div class="head">'
+      + '<span class="author">'+escapeHtml(p.author)+'</span>'
+      + '<span class="when">'+timeAgo(p.published_at)+'</span>'
+      + (p.status === 'draft' ? '<span class="draft-tag">Draft</span>' : '')
+    + '</div>'
+    + '<div class="caption" data-open="'+escapeHtml(p.slug)+'">'+escapeHtml(p.caption)+'</div>'
+    + galleryHtml(p.assets)
+    + reactBarHtml(p.id, null)
+    + '<div class="hint" data-open="'+escapeHtml(p.slug)+'" style="cursor:pointer;margin-top:6px">'
+      + (p.reaction_count||0) + ' reaction' + (p.reaction_count===1?'':'s')
+      + ' · ' + (p.comment_count||0) + ' comment' + (p.comment_count===1?'':'s')
+      + ' · ' + (p.view_count||0) + ' view' + (p.view_count===1?'':'s')
+    + '</div>'
+  + '</article>';
+}
+
+// container is the .box.post <article> element (dataset.slug/id live there)
+function wireReactButtons(container){
+  container.querySelectorAll('.react').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const postId = btn.dataset.post, kind = btn.dataset.kind;
+      btn.disabled = true;
+      const res = await toggleReaction(postId, kind);
+      btn.disabled = false;
+      if (!res) return;
+      myReactions[postId] = myReactions[postId] || new Set();
+      if (res.added) myReactions[postId].add(kind); else myReactions[postId].delete(kind);
+      // feed cards have no per-kind breakdown to redraw against — just
+      // reflect the toggle's pressed state and move on.
+      const hasCounts = !!container.querySelector('.reactbar .cnt');
+      container.querySelector('.reactbar').outerHTML =
+        reactBarHtml(postId, hasCounts ? res.reactions : null);
+      wireReactButtons(container);
+    });
+  });
+  const shareBtn = container.querySelector('[data-share]');
+  if (shareBtn) shareBtn.onclick = () => doShare(container.dataset.slug, container.dataset.id);
+}
+function wireCard(el){
+  el.querySelectorAll('[data-open]').forEach(n => {
+    n.addEventListener('click', () => navigate('/p/' + n.dataset.open));
+  });
+  wireReactButtons(el);
+}
+function doShare(slug, postId){
+  const url = location.origin + '/p/' + slug;
+  const done = () => { toast('Link copied'); trackEvent(postId, 'share'); };
+  if (navigator.share){
+    navigator.share({ url, title: 'STO Supply Co' }).then(done).catch(()=>{});
+  } else if (navigator.clipboard){
+    navigator.clipboard.writeText(url).then(done, () => toast(url));
+  } else {
+    toast(url);
+  }
+}
+
+async function viewFeed(){
+  mainEl.innerHTML = '<div class="box empty">Loading…</div>';
+  const posts = await listPosts(isAuthor);
+  if (!posts.length){
+    mainEl.innerHTML = '<div class="box empty">No posts yet.</div>';
+    return;
+  }
+  mainEl.innerHTML = posts.map(postCardHtml).join('');
+  Array.from(mainEl.children).forEach((el) => {
+    const c = el.querySelector('.carousel');
+    if (c) initCarousel(c, false);
+    wireCard(el);
+  });
+}
+
+async function viewSinglePost(slug){
+  mainEl.innerHTML = '<div class="box empty">Loading…</div>';
+  const data = await getPost(slug);
+  if (!data || !data.post){
+    mainEl.innerHTML = '<div class="box empty">Post not found. <a href="/" data-back>Back to feed</a></div>';
+    mainEl.querySelector('[data-back]').addEventListener('click', (e)=>{e.preventDefault();navigate('/');});
+    return;
+  }
+  const p = data.post;
+  trackEvent(p.id, 'view');
+
+  const commentsHtml = (data.comments||[]).map(c =>
+    '<div class="c"><span class="cname">'+escapeHtml(c.name)+'</span>'
+    + '<span class="cwhen">'+timeAgo(c.created_at)+'</span>'
+    + '<div class="cbody">'+escapeHtml(c.body)+'</div></div>'
+  ).join('') || '<div class="hint">No comments yet — be the first.</div>';
+
+  mainEl.innerHTML =
+    '<div class="hint"><a href="/" data-back>&larr; Back to feed</a></div>'
+    + '<article class="box post" data-slug="'+escapeHtml(p.slug)+'" data-id="'+p.id+'">'
+      + '<div class="head"><span class="author">'+escapeHtml(p.author)+'</span>'
+        + '<span class="when">'+timeAgo(p.published_at)+'</span>'
+        + (p.status === 'draft' ? '<span class="draft-tag">Draft</span>' : '')
+      + '</div>'
+      + '<div class="caption">'+escapeHtml(p.caption)+'</div>'
+      + galleryHtml(data.assets)
+      + reactBarHtml(p.id, data.reactions)
+      + '<div class="comments">'
+        + '<div class="dash-title">Comments</div>'
+        + commentsHtml
+        + '<form id="commentForm">'
+          + '<div class="row"><input type="text" id="cName" placeholder="Your name" maxlength="60" required/></div>'
+          + '<textarea id="cBody" placeholder="Say something…" maxlength="2000" required></textarea>'
+          + '<div><button class="btn" type="submit">Post comment</button></div>'
+          + '<div class="err" id="cErr" hidden></div>'
+        + '</form>'
+      + '</div>'
+    + '</article>';
+
+  mainEl.querySelector('[data-back]').addEventListener('click', (e)=>{e.preventDefault();navigate('/');});
+  const article = mainEl.querySelector('article');
+  initCarousel(article.querySelector('.carousel'), false);
+  wireReactButtons(article);
+
+  document.getElementById('commentForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('cName').value.trim();
+    const body = document.getElementById('cBody').value.trim();
+    const errEl = document.getElementById('cErr');
+    errEl.hidden = true;
+    if (!name || !body) return;
+    const res = await addComment(p.id, name, body);
+    if (!res){ errEl.textContent = 'Could not post comment — try again shortly.'; errEl.hidden = false; return; }
+    viewSinglePost(slug);
+  });
+}
+
+/* ── sign in ─────────────────────────────────────────────────────────── */
+function viewSignIn(){
+  mainEl.innerHTML =
+    '<div class="box" id="authPanel">'
+    + '<div class="dash-title">Sign in</div>'
+    + '<form id="signInForm">'
+      + '<input type="email" id="siEmail" placeholder="Email" required/>'
+      + '<input type="password" id="siPass" placeholder="Password" required/>'
+      + '<div><button class="btn" type="submit">Sign in</button></div>'
+      + '<div class="err" id="siErr" hidden></div>'
+    + '</form>'
+  + '</div>';
+  document.getElementById('signInForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('siEmail').value.trim();
+    const pass  = document.getElementById('siPass').value;
+    const errEl = document.getElementById('siErr');
+    errEl.hidden = true;
+    const { data, error } = await supa.auth.signInWithPassword({ email, password: pass });
+    if (error){ errEl.textContent = error.message; errEl.hidden = false; return; }
+    session = data.session;
+    await refreshAuthorStatus();
+    if (!isAuthor){
+      await supa.auth.signOut();
+      session = null;
+      errEl.textContent = 'Signed in, but this account is not an author on this site.';
+      errEl.hidden = false;
+      paintAuthUI();
+      return;
+    }
+    paintAuthUI();
+    toast('Signed in as ' + session.user.email);
+    navigate('/');
+  });
+}
+
+/* ── composer ────────────────────────────────────────────────────────── */
+let composerAssets = []; // { kind, url, alt, uploading }
+
+function assetThumbHtml(a, idx){
+  let inner;
+  if (a.kind === 'photo') inner = '<img src="'+escapeHtml(a.url)+'"/>';
+  else if (a.kind === 'video') inner = '<video src="'+escapeHtml(a.url)+'" muted></video>';
+  else inner = '<div class="fb">FB Reel</div>';
+  return '<div class="asset-thumb" data-idx="'+idx+'">' + inner
+    + (a.uploading ? '<div class="uploading">uploading…</div>' : '')
+    + '<button class="rm" type="button" data-rm="'+idx+'" title="Remove">&times;</button>'
+  + '</div>';
+}
+function paintAssetList(){
+  const el = document.getElementById('assetList');
+  if (!el) return;
+  el.innerHTML = composerAssets.map(assetThumbHtml).join('');
+  el.querySelectorAll('[data-rm]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      composerAssets.splice(Number(btn.dataset.rm), 1);
+      paintAssetList();
+    });
+  });
+}
+
+async function uploadFile(file){
+  const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
+  const path = 'composer/' + uuid() + '.' + ext;
+  const { error } = await supa.storage.from('post-media').upload(path, file, {
+    contentType: file.type, upsert: false
+  });
+  if (error) throw error;
+  const { data } = supa.storage.from('post-media').getPublicUrl(path);
+  return data.publicUrl;
+}
+
+function viewComposer(){
+  composerAssets = [];
+  mainEl.innerHTML =
+    '<div class="box" id="composer">'
+    + '<div class="dash-title">New post</div>'
+    + '<div class="field">'
+      + '<label>Posting as</label>'
+      + '<input type="text" id="cpAuthor" value="STO Supply Co"/>'
+    + '</div>'
+    + '<div class="field">'
+      + '<label>Caption</label>'
+      + '<textarea id="cpCaption" placeholder="What\'s going on…" maxlength="2000"></textarea>'
+    + '</div>'
+    + '<div class="field">'
+      + '<label>Photos / videos</label>'
+      + '<input type="file" id="cpFiles" accept="image/*,video/*" multiple/>'
+      + '<div id="assetList"></div>'
+    + '</div>'
+    + '<div class="field">'
+      + '<label>Facebook Reel link</label>'
+      + '<div style="display:flex;gap:6px">'
+        + '<input type="text" id="cpFbUrl" placeholder="https://www.facebook.com/reel/…"/>'
+        + '<button class="btn ghost" type="button" id="cpFbAdd">Add</button>'
+      + '</div>'
+    + '</div>'
+    + '<div class="actions">'
+      + '<button class="btn ghost" id="cpDraft">Save as draft</button>'
+      + '<button class="btn" id="cpPublish">Publish</button>'
+      + '<span class="hint" id="cpStatus"></span>'
+    + '</div>'
+    + '<div class="err" id="cpErr" hidden></div>'
+  + '</div>';
+
+  document.getElementById('cpFiles').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const file of files){
+      const kind = file.type.startsWith('video') ? 'video' : 'photo';
+      const localUrl = URL.createObjectURL(file);
+      const entry = { kind, url: localUrl, alt: '', uploading: true };
+      composerAssets.push(entry);
+      paintAssetList();
+      try {
+        const publicUrl = await uploadFile(file);
+        entry.url = publicUrl;
+        entry.uploading = false;
+      } catch (err){
+        toast('Upload failed: ' + err.message);
+        composerAssets.splice(composerAssets.indexOf(entry), 1);
+      }
+      paintAssetList();
+    }
+  });
+
+  document.getElementById('cpFbAdd').addEventListener('click', () => {
+    const input = document.getElementById('cpFbUrl');
+    const url = input.value.trim();
+    if (!url) return;
+    composerAssets.push({ kind: 'facebook_embed', url, alt: '', uploading: false });
+    input.value = '';
+    paintAssetList();
+  });
+
+  async function submit(status){
+    const errEl = document.getElementById('cpErr');
+    const statusEl = document.getElementById('cpStatus');
+    errEl.hidden = true;
+    const caption = document.getElementById('cpCaption').value.trim();
+    const author  = document.getElementById('cpAuthor').value.trim() || 'STO Supply Co';
+    if (!caption && composerAssets.length === 0){
+      errEl.textContent = 'Add a caption or at least one photo/video.';
+      errEl.hidden = false;
+      return;
+    }
+    if (composerAssets.some(a => a.uploading)){
+      errEl.textContent = 'Still uploading — wait for it to finish.';
+      errEl.hidden = false;
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    const { data: post, error } = await supa.from('posts')
+      .insert({ caption, author, status })
+      .select().single();
+    if (error){
+      statusEl.textContent = '';
+      errEl.textContent = error.message;
+      errEl.hidden = false;
+      return;
+    }
+    if (composerAssets.length){
+      const rows = composerAssets.map((a, idx) => ({
+        post_id: post.id, kind: a.kind, url: a.url, alt: a.alt || null, position: idx
+      }));
+      const { error: aErr } = await supa.from('post_assets').insert(rows);
+      if (aErr){
+        statusEl.textContent = '';
+        errEl.textContent = 'Post saved, but gallery failed: ' + aErr.message;
+        errEl.hidden = false;
+        return;
+      }
+    }
+    statusEl.textContent = '';
+    toast(status === 'draft' ? 'Draft saved' : 'Published');
+    navigate('/p/' + post.slug);
+  }
+  document.getElementById('cpDraft').addEventListener('click', () => submit('draft'));
+  document.getElementById('cpPublish').addEventListener('click', () => submit('published'));
+}
+
+/* ── dashboard ───────────────────────────────────────────────────────── */
+async function viewDashboard(){
+  mainEl.innerHTML = '<div class="box empty">Loading…</div>';
+  const { data, error } = await supa.rpc('analytics', { p_days: 30 });
+  if (error){
+    mainEl.innerHTML = '<div class="box empty">Could not load analytics: '+escapeHtml(error.message)+'</div>';
+    return;
+  }
+  const t = data.totals || {};
+  const stats = [
+    ['Views', t.views||0], ['Viewers', t.viewers||0], ['Shares', t.shares||0]
+  ].map(([l,n]) => '<div class="stat"><div class="n">'+n+'</div><div class="l">'+l+'</div></div>').join('');
+
+  const postsRows = (data.posts||[]).map(p =>
+    '<tr><td>'+escapeHtml(p.caption||'').slice(0,40)+(p.status==='draft'?' (draft)':'')+'</td>'
+    + '<td>'+p.views+'</td><td>'+p.comments+'</td><td>'+p.reactions+'</td></tr>'
+  ).join('') || '<tr><td colspan="4">No posts yet</td></tr>';
+
+  const dailyRows = (data.daily||[]).slice(-14).map(d =>
+    '<tr><td>'+d.day+'</td><td>'+d.views+'</td></tr>'
+  ).join('') || '<tr><td colspan="2">No data yet</td></tr>';
+
+  const recentRows = (data.recent_comments||[]).map(c =>
+    '<tr><td>'+escapeHtml(c.name)+'</td><td>'+escapeHtml(c.body).slice(0,60)+'</td>'
+    + '<td>'+escapeHtml(c.caption||'').slice(0,30)+'</td><td>'+timeAgo(c.created_at)+'</td></tr>'
+  ).join('') || '<tr><td colspan="4">No comments yet</td></tr>';
+
+  mainEl.innerHTML =
+    '<div class="box" id="dashboard">'
+    + '<div class="dash-title" style="margin-top:0">Last 30 days</div>'
+    + '<div class="stat-row">' + stats + '</div>'
+    + '<div class="dash-title">Views per day</div>'
+    + '<table class="data"><thead><tr><th>Day</th><th>Views</th></tr></thead><tbody>'+dailyRows+'</tbody></table>'
+    + '<div class="dash-title">Posts</div>'
+    + '<table class="data"><thead><tr><th>Caption</th><th>Views</th><th>Comments</th><th>Reactions</th></tr></thead>'
+      + '<tbody>'+postsRows+'</tbody></table>'
+    + '<div class="dash-title">Recent comments</div>'
+    + '<table class="data"><thead><tr><th>Name</th><th>Comment</th><th>Post</th><th>When</th></tr></thead>'
+      + '<tbody>'+recentRows+'</tbody></table>'
+  + '</div>';
+}
+
+/* ── router ──────────────────────────────────────────────────────────── */
+function navigate(path){
+  if (location.pathname !== path) history.pushState({}, '', path);
+  route();
+}
+function route(){
+  const path = location.pathname;
+  if (path === '/' || path === '/index.html') { viewFeed(); return; }
+  if (path === '/signin') { viewSignIn(); return; }
+  if (path === '/compose') {
+    if (!isAuthor){ navigate('/signin'); return; }
+    viewComposer(); return;
+  }
+  if (path === '/dashboard') {
+    if (!isAuthor){ navigate('/signin'); return; }
+    viewDashboard(); return;
+  }
+  const m = path.match(/^\/p\/([^/]+)$/);
+  if (m) { viewSinglePost(decodeURIComponent(m[1])); return; }
+  viewFeed();
+}
+window.addEventListener('popstate', route);
+
+/* ── boot ────────────────────────────────────────────────────────────── */
+(async function boot(){
+  // restore a hard-loaded deep link stashed by 404.html
+  try {
+    const stashed = sessionStorage.getItem('sto_redirect');
+    if (stashed){
+      sessionStorage.removeItem('sto_redirect');
+      history.replaceState({}, '', stashed);
+    }
+  } catch(e){}
+
+  await checkSession();
+  supa.auth.onAuthStateChange(async (_event, sess) => {
+    session = sess;
+    await refreshAuthorStatus();
+    paintAuthUI();
+  });
+  route();
+})();
+
 })();
 </script>
 </body>
