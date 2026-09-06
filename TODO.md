@@ -1,9 +1,14 @@
 # What's left to do — stosupplyco.com
 
-Status **05 Sep 2026**. Repo cloned (empty) at
-`F:\Ctsgpyprojects\stosupplyco.com`. Nothing built yet — this file tracks the
-plan while Anthony builds the front end and the client (or Anthony) handles
-Supabase + GitHub setup.
+Status **05 Sep 2026**. Site is **live at https://stosupplyco.com** with the
+front end, Supabase backend, branding, SEO and a range mini-game all built and
+deployed. What remains is listed under "Next up" — mostly things that need a
+human with an author login. The opening paragraphs below are kept as the
+original plan; scroll to "Second pass" for the current state.
+
+*(Original note: repo cloned empty at `F:\Ctsgpyprojects\stosupplyco.com`,
+nothing built yet — this file tracked the plan while Anthony built the front end
+and the client handled Supabase + GitHub setup.)*
 
 Architecture reference: `F:\fred-seniorsecured.org` (Anthony's first client
 site) — same skeleton, adapted from long-form blog to short-post feed. See
@@ -97,6 +102,88 @@ that repo's README.md and supabase/schema.sql for the pattern being mimicked.
         password (Anthony's or the client's) that Claude doesn't hold.
         Anthony should smoke-test this next, same as Fred's own
         first-post smoke test.
+- [x] **Branding, layout, post deletion, editable carousel, SEO and a range
+      mini-game** (05 Sep 2026) — see the section below.
+
+## Second pass: branding, layout, features, SEO (05 Sep 2026)
+
+**Logo.** Two rounds. The first supplied logo was a product mockup — artwork on
+a vignetted grey wall with a drop shadow. Neither brightness nor colour can cut
+that: the shadow (160-224) overlaps the artwork's own metal highlights, and the
+steel is as neutral as the wall. It came out on *texture* — over a 3x3 window
+the wall reads std ~0.3 and its shadow ~0.9 while the gritty render never drops
+below ~10 — in three stages (flat-bright-neutral test, border flood for the
+shadow's dark core, gradient-limited grow for the contact shadow). That produced
+`sto-logo.*`, `sto-badge.*` and the favicons.
+
+It was then replaced by the current wordmark (`new_sto_logo.png`), which
+**already carried a clean alpha channel** — alpha-vs-luminance correlation of
+0.019 proves a real mask rather than a brightness key. Its core plateaus at
+252-253 rather than 255, which over `#141414` shifts a metal value of 60 to
+59.5, so the mask was deliberately left untouched. Delivered at 1200px: the mark
+renders at ~190 CSS px, so that is already ~6x, and going larger only costs
+visitors bandwidth. WebP is served with a PNG fallback because the artwork is
+photographic and PNG is a poor fit for it (126KB vs 452KB).
+
+**The favicons still come from the OLD shield emblem**, because a wordmark is
+illegible at 32px. That makes `sto-badge.*` the only surviving piece of the
+previous artwork, and it is otherwise unreferenced by the page.
+
+**Layout.** `.page` is now three tracks (`1fr | 480px | 1fr`). The feed sits in
+the fixed middle track so it centres on the viewport regardless of what flanks
+it; the profile widget is pinned to the left gutter and the range game to the
+right. The feed used to be `1fr`, which stretched the post card to ~920px around
+a 420px gallery and left a band of dead card beside every image. Below 1000px
+the whole thing stacks — at 900px the third track squeezed the game panel to
+~128px, which is not playable.
+
+**Post deletion.** Author-only, on feed cards and the single-post view, behind a
+real confirmation. No migration was needed: `posts_author_del` already permitted
+it and assets/comments/reactions/events cascade. What does *not* cascade is the
+uploaded file, so `deletePost()` sweeps the storage objects first — otherwise
+every deleted post orphans its photos in the storage quota forever.
+
+**Editable profile carousel.** The two images were hard-coded, so changing them
+meant a redeploy. They now come from `public.site_settings` (new migration,
+public read / author write) with the shipped pair as the fallback, and an author
+can upload, reorder and reset them from the UI. The migration has been applied
+and verified live: anon read works, and an anonymous write is correctly refused
+by RLS. The table is generic key/value jsonb, so moving the name/role/bio into
+it later needs no second migration.
+
+**SEO.** Title and description aimed at 2A, Black gun owners, and Cleveland /
+Ohio firearms; canonical, robots, theme-color; Open Graph and Twitter cards with
+**absolute** image URLs — the previous `og:image` was a relative path, which
+crawlers cannot resolve, so every link preview was broken. New 1200x630 share
+card, Organization + WebSite JSON-LD, the site name promoted to an `h1` (there
+was none), a `noscript` summary, `robots.txt` and `sitemap.xml`. Copy says
+"firearms" throughout except "Black gun owners" / "Black gun lovers", which are
+kept because that is what the community calls itself and what people search.
+
+> **The real SEO ceiling is structural, not tag-level.** The feed is rendered
+> client-side from Supabase, and `/p/<slug>` falls through to `404.html` and
+> bounces to the root — so no individual post is indexable, and the sitemap
+> lists only `/` on purpose. Fixing that means pre-rendering or moving off
+> GitHub Pages. No amount of meta-tag work substitutes for it.
+
+**Range mini-game** (`The Range`, right gutter). A self-contained IIFE placed
+*above* the `CONFIGURED` guard so it still runs if Supabase is unwired. An
+outdoor dusk range: steel deer rise from behind cover in three depth lanes,
+stand, then drop. Far lane pays triple, the vital ring pays most, and both the
+standing time and the gap between pop-ups tighten as you score. Canvas scene is
+prerendered offscreen with a seeded PRNG so hills and trees survive a resize;
+deer are clipped to their lane's ground line with grass drawn over it, so the
+edge each one rises through never shows. Works on touch. A synthesised bell
+(no audio file) rings on a vital hit, with a mute toggle — audio on a public
+site should never be forced on a visitor.
+
+- **Latent bug fixed here, worth remembering:** the loop guarded its restart on
+  `if (!raf)`. A backgrounded tab never fires its pending frame, so `raf` kept a
+  handle that could never resolve and the game was dead permanently after one
+  tab switch. Always cancel-and-reschedule.
+- **The drawn vital ring and its hit test are separate code** (`drawDeer`'s arc
+  vs `zoneAt`'s hypot). They must stay identical or the game lies about where to
+  aim. Currently `(54, -64) r11` in both.
 
 ## Anthony's (or client's) setup queue
 
@@ -134,13 +221,43 @@ that repo's README.md and supabase/schema.sql for the pattern being mimicked.
 
 ## Next up
 
-- [ ] Anthony (or the client) signs in on the live site and smoke-tests:
-      publish a post with a photo/video, react to it, leave a comment,
-      check the dashboard shows it
-- [ ] Real bio/role copy from the client (profile panel still has
-      placeholder text)
+Nothing below is blocked on code — these all need a human with an author login
+or a decision from the client.
+
+- [ ] **Smoke-test the author path.** Sign in on the live site and: publish a
+      post with a photo/video, react, comment, check the dashboard, **delete a
+      post**, and **save a new profile carousel**. None of these have ever been
+      run for real — they need an author password, which Claude does not hold
+      and will not handle. This is the single biggest untested area.
+- [ ] **Watch the range game run for 30 seconds.** Its logic was verified
+      against a stubbed DOM and its artwork by re-rendering the same
+      coordinates offline, but the animation itself — rise, knockdown pivot,
+      drifting clouds, reticle — has never been seen in a browser.
+- [ ] **A dead Facebook embed.** The second post's reel renders "Video
+      Unavailable" — it is gone or not public. Fix or delete that post.
+- [ ] Verify the site in Google Search Console and submit `sitemap.xml`. Add
+      the client's social URLs to the JSON-LD `sameAs` array. Consider a Google
+      Business Profile — local pack placement is what "Cleveland firearms"
+      actually rewards, far more than any on-page tag.
 - [ ] Decide reaction icon set/wording — currently defaulted to
       👍/🔥/💯, not yet confirmed with the client
 - [ ] The 3 Facebook Reels in `fb_embeddedings.txt` haven't been added as
       posts yet — composer supports it (paste the reel URL into the
       "Facebook Reel link" field), just needs doing
+- [ ] Decide whether the favicon should stay as the old shield emblem now that
+      the logo is a wordmark (see the branding section above)
+- [ ] Optional: move the name/role/bio into `site_settings` so the client can
+      edit their own copy. Currently hard-coded in `index.html` as
+      "Daddy, Life Saver, Springfield Armory Lover" / "Cleveland, OH · 2A
+      Advocate" — note *Armory*, the US spelling of the brand.
+
+## Known constraints (not bugs)
+
+- **Individual posts are not indexable.** GitHub Pages has no rewrite rules, so
+  `/p/<slug>` hits `404.html` and is bounced to `/`. Search engines only ever
+  see the home page.
+- **`sto-badge.png` / `.webp` are unreferenced** by the page. They are kept as
+  the source for regenerating favicons; safe to delete if the favicon changes.
+- **PowerShell 5.1 wraps git's stderr as a NativeCommandError** on push. The
+  push has usually succeeded — check `git status -sb` rather than trusting the
+  red text.
