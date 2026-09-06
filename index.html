@@ -4,8 +4,11 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>STO Supply Co</title>
+<link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"/>
+<link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png"/>
 <meta property="og:title" content="STO Supply Co"/>
 <meta property="og:type" content="website"/>
+<meta property="og:image" content="assets/sto-logo.png"/>
 <style>
 :root{
   --bg:#141414; --surface:#1c1c1c; --surface-2:#242424; --line:#2c2c2c;
@@ -19,19 +22,34 @@ button,input,textarea,select{font-family:inherit;font-size:13px;color:inherit;ba
 a{color:var(--maroon-lt)}
 [hidden]{display:none!important}
 
+/* Three tracks, not two. The feed is a fixed 480px flanked by equal 1fr
+   gutters, so it sits dead-centre in the viewport; the profile widget lives in
+   the left gutter and is pinned to its start edge rather than riding along with
+   the centring. The feed is capped rather than 1fr because a 1fr feed stretched
+   the post card to ~920px while its gallery is 420px, leaving a band of dead
+   card beside every image. */
 .page{
-  max-width:1180px;margin:0 auto;padding:22px 18px 60px;
+  margin:0;padding:22px 18px 60px;
   display:grid;gap:18px;
-  grid-template-columns:220px minmax(0,1fr);
-  grid-template-areas:"profile main";
+  grid-template-columns:1fr minmax(0,480px) 1fr;
+  grid-template-areas:"profile main game";
   align-items:start;
 }
-.profile-col{grid-area:profile;display:flex;flex-direction:column;gap:18px;position:sticky;top:22px}
+.profile-col{grid-area:profile;justify-self:start;width:220px;
+  display:flex;flex-direction:column;gap:18px;position:sticky;top:22px}
+/* Mirrors the profile column on the opposite gutter: pinned to its edge, and
+   sticky so it stays put while the feed scrolls past it. */
+/* min() so it shrinks with the gutter on a narrow desktop instead of
+   overflowing it — the track is 1fr and will not hold a fixed 300px. */
+.game-col{grid-area:game;justify-self:end;width:min(300px,100%);position:sticky;top:22px;padding:12px}
 main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 
 /* ── profile ─────────────────────────────────────────────── */
 #profile{padding:12px}
+/* Capped rather than full-bleed: the lockup is wider than it is tall, and at
+   the card's full 196px the wordmark starts to out-shout the profile shot. */
+#profile .logo{display:block;width:100%;max-width:186px;height:auto;margin:0 auto 12px}
 #profile .name{font-size:15px;font-weight:700;color:var(--ink);margin-top:9px}
 #profile .role{color:var(--muted);margin-top:1px}
 #profile .bio{color:var(--ink-2);margin-top:8px;line-height:1.55;font-size:12px}
@@ -77,7 +95,13 @@ main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
   border-radius:4px;padding:1px 6px}
 .post .caption{white-space:pre-wrap;color:var(--ink-2);margin-bottom:10px;cursor:pointer}
 .post .caption:hover{color:var(--ink)}
-.post .gallery{margin-bottom:10px;max-width:420px}
+/* Author-only controls. Muted until hovered so they never compete with the
+   post itself, and pushed right so they cannot be hit by accident. */
+.post .head .owner{margin-left:auto;display:flex;gap:10px;align-items:baseline}
+.post .head .draft-tag + .owner{margin-left:10px}
+.post .head .owner button{background:none;border:0;cursor:pointer;color:var(--muted);font-size:11px;padding:0}
+.post .head .owner button:hover{color:var(--maroon-lt)}
+.post .gallery{margin:0 auto 10px;max-width:100%}
 .post .gallery .carousel{aspect-ratio:4/5}
 
 .reactbar{display:flex;align-items:center;gap:14px;padding-top:6px;border-top:1px solid var(--line)}
@@ -152,6 +176,76 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 .dash-title{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);
   margin:14px 0 6px}
 
+/* ── range mini-game ─────────────────────────────────────────── */
+.game-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+.game-head .g-title{font-weight:700;font-size:12px;letter-spacing:.5px;text-transform:uppercase}
+.game-head .g-right{display:flex;align-items:center;gap:8px}
+.game-head .g-best{font-size:11px;color:var(--muted)}
+.game-head .g-best b{color:var(--ink-2)}
+.g-mute{background:none;border:0;cursor:pointer;font-size:12px;line-height:1;padding:0;opacity:.65}
+.g-mute:hover{opacity:1}
+.g-mute[aria-pressed="true"]{opacity:.4}
+
+/* touch-action:none so a tap on the range fires a shot instead of starting a
+   scroll, and so a quick double-tap does not zoom the page. */
+.game-stage{position:relative;width:100%;aspect-ratio:1;border-radius:8px;overflow:hidden;
+  border:1px solid var(--line);background:#101010;touch-action:none;user-select:none}
+/* The reticle replaces the pointer, so the real one has to go. */
+.game-stage.armed{cursor:none}
+.game-stage canvas{display:block;width:100%;height:100%}
+
+/* Drawn, not an image file — it scales crisply and costs no request. */
+.reticle{position:absolute;left:0;top:0;width:46px;height:46px;margin:-23px 0 0 -23px;
+  pointer-events:none;opacity:0;transition:opacity .12s ease}
+.game-stage.armed .reticle{opacity:1}
+.reticle::before,.reticle::after{content:"";position:absolute;background:var(--maroon-lt);
+  box-shadow:0 0 0 1px rgba(0,0,0,.55)}
+.reticle::before{left:50%;top:0;width:1px;height:100%;margin-left:-.5px}
+.reticle::after{top:50%;left:0;height:1px;width:100%;margin-top:-.5px}
+.reticle .ring{position:absolute;inset:9px;border:1px solid var(--maroon-lt);border-radius:50%;
+  box-shadow:0 0 0 1px rgba(0,0,0,.45)}
+.reticle .dot{position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px 0 0 -1.5px;
+  border-radius:50%;background:var(--maroon-lt)}
+.reticle.recoil{animation:recoil .13s ease-out}
+@keyframes recoil{0%{transform:scale(1)}45%{transform:scale(1.32)}100%{transform:scale(1)}}
+
+.game-overlay{position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:6px;text-align:center;padding:14px;
+  background:rgba(10,10,10,.82);cursor:default}
+.game-overlay .g-msg{font-weight:700;font-size:15px}
+.game-overlay .g-sub{font-size:11px;color:var(--muted);line-height:1.5}
+.game-overlay .btn{margin-top:6px;padding:5px 16px;font-size:12px}
+
+.game-hud{display:flex;justify-content:space-between;margin-top:8px;font-size:11px;color:var(--muted)}
+.game-hud b{color:var(--ink);font-weight:700}
+.game-hud .hot b{color:var(--maroon-lt)}
+
+/* ── confirm dialog ──────────────────────────────────────────── */
+/* Deleting a post is irreversible and cascades to its comments and
+   reactions, so it gets a real confirmation rather than window.confirm. */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;
+  align-items:center;justify-content:center;z-index:500;padding:20px}
+#modal .sheet{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);
+  padding:18px;max-width:360px;width:100%}
+#modal h3{font-size:14px;margin-bottom:6px}
+#modal p{color:var(--ink-2);font-size:12px;margin-bottom:14px;line-height:1.5}
+#modal .row{display:flex;gap:8px;justify-content:flex-end}
+
+/* ── profile editor ──────────────────────────────────────────── */
+#profileEdit{padding:14px}
+#profileEdit .slots{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+#profileEdit .slot{position:relative;width:86px;height:86px;border-radius:6px;overflow:hidden;
+  border:1px solid var(--line);background:#000}
+#profileEdit .slot img,#profileEdit .slot video{width:100%;height:100%;object-fit:cover}
+#profileEdit .slot .rm{position:absolute;top:2px;right:2px;background:rgba(0,0,0,.7);color:#fff;
+  border:0;border-radius:50%;width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1}
+#profileEdit .slot .mv{position:absolute;bottom:2px;background:rgba(0,0,0,.7);color:#fff;border:0;
+  width:18px;height:18px;font-size:11px;cursor:pointer;line-height:1;border-radius:3px}
+#profileEdit .slot .mv.l{left:2px}
+#profileEdit .slot .mv.r{left:24px}
+#profileEdit .uploading{position:absolute;inset:0;background:rgba(0,0,0,.55);
+  display:flex;align-items:center;justify-content:center;font-size:9px;color:#fff}
+
 /* ── toast ───────────────────────────────────────────────────── */
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%) translateY(50px);
   background:var(--surface-2);border:1px solid var(--line);color:var(--ink);
@@ -159,9 +253,21 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
   pointer-events:none;z-index:400}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1}
 
+/* Below this the gutters cannot hold a playable range — at 900px the third
+   track squeezes the panel to ~128px — so the whole thing stacks instead. The
+   game goes under the profile rather than at the very bottom, where nobody
+   would scroll past an endless feed to find it. */
+@media (max-width:1000px){
+  .page{grid-template-columns:minmax(0,520px);grid-template-areas:"profile" "game" "main";
+    justify-content:center}
+  .profile-col{position:static;width:220px;justify-self:center}
+  .game-col{position:static;width:100%;max-width:320px;justify-self:center}
+}
+
 @media (max-width:640px){
-  .page{grid-template-columns:1fr;grid-template-areas:"profile" "main"}
-  .profile-col{position:static;flex-direction:row;align-items:flex-start;gap:12px}
+  .page{grid-template-columns:minmax(0,1fr)}
+  /* The profile card turns horizontal so it does not eat the whole first screen */
+  .profile-col{width:100%;flex-direction:row;align-items:flex-start;gap:12px}
   .carousel{width:110px;flex-shrink:0}
   #profile{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;width:100%}
   #profileFooter{width:100%}
@@ -173,6 +279,10 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 
   <div class="profile-col">
     <aside class="box" id="profile">
+      <picture>
+        <source srcset="assets/sto-logo.webp" type="image/webp"/>
+        <img class="logo" src="assets/sto-logo.png" alt="STO Supply Co" width="665" height="521"/>
+      </picture>
       <div class="carousel" id="profileCarousel">
         <div class="track">
           <div class="slide"><img src="assets/sto-01.jpg" alt="STO Supply Co"/></div>
@@ -180,11 +290,12 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
         </div>
       </div>
       <div class="name">STO Supply Co</div>
-      <div class="role">placeholder role/tagline</div>
-      <div class="bio">placeholder bio — swap in real copy once the client sends it.</div>
+      <div class="role">Daddy, Life Saver, Springfield Armory Lover</div>
+      <div class="bio">Cleveland, OH · 2A Advocate</div>
       <div id="profileFooter">
         <a href="/" id="feedLink">Feed</a>
         <button id="composeBtn" hidden>New post</button>
+        <button id="profileEditBtn" hidden>Edit profile images</button>
         <button id="dashboardBtn" hidden>Dashboard</button>
         <button id="signInBtn">Sign in</button>
         <button id="signOutBtn" hidden>Sign out</button>
@@ -195,9 +306,34 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 
   <main id="main"></main>
 
+  <aside class="box game-col" id="gamePanel" aria-label="Bullseye mini game">
+    <div class="game-head">
+      <span class="g-title">The Range</span>
+      <span class="g-right">
+        <button id="gMute" class="g-mute" type="button" aria-pressed="false" title="Mute the bullseye bell">🔊</button>
+        <span class="g-best">Best <b id="gBest">0</b></span>
+      </span>
+    </div>
+    <div class="game-stage" id="gStage">
+      <canvas id="gCanvas"></canvas>
+      <div class="reticle" id="gReticle"><span class="ring"></span><span class="dot"></span></div>
+      <div class="game-overlay" id="gOverlay">
+        <div class="g-msg" id="gMsg">Bullseye</div>
+        <div class="g-sub" id="gSub">30 seconds. Centre shots score most,<br>and they get faster.</div>
+        <button class="btn" id="gStart">Start</button>
+      </div>
+    </div>
+    <div class="game-hud">
+      <span>Score <b id="gScore">0</b></span>
+      <span id="gComboWrap">Combo <b id="gCombo">x1</b></span>
+      <span>Time <b id="gTime">30</b></span>
+    </div>
+  </aside>
+
 </div>
 
 <div id="toast"></div>
+<div id="modalRoot"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
 <script src="config.js"></script>
@@ -230,6 +366,9 @@ function initCarousel(root, autoplay){
   }
   const dots = root.querySelectorAll('.dots button');
   let i = 0, timer = null;
+  // The profile carousel is re-rendered whenever its images are edited, so a
+  // previous autoplay timer on this root has to be cleared or they accumulate.
+  if (root._carouselTimer) clearInterval(root._carouselTimer);
 
   function render(){
     track.style.transform = 'translateX(-' + (i * 100) + '%)';
@@ -239,10 +378,309 @@ function initCarousel(root, autoplay){
   function restart(){
     if (timer) clearInterval(timer);
     if (autoplay && slides.length > 1) timer = setInterval(() => go(i + 1), 4000);
+    root._carouselTimer = timer;
   }
   render(); restart();
 }
 initCarousel(document.getElementById('profileCarousel'), true);
+
+/* The slides shipped in the HTML are the fallback: they render instantly and
+   are what visitors see if the site_settings row has never been written (or if
+   Supabase is unreachable). Captured before anything replaces them. */
+const DEFAULT_PROFILE_MEDIA = Array.from(
+  document.querySelectorAll('#profileCarousel .slide img')
+).map(img => ({ kind: 'photo', url: img.getAttribute('src'), alt: img.alt || '' }));
+
+/* ── range mini-game ─────────────────────────────────────────────────
+   Lives in the right gutter and is entirely self-contained: no Supabase, no
+   routing, and it never touches the feed. Runs above the config guard so it
+   still works on a site whose backend is not wired up yet.
+
+   The loop: one target at a time, shrinking. Hit it before it vanishes. The
+   closer to centre the more it scores, consecutive hits build a multiplier,
+   and every hit shortens the next target's life — so the difficulty is set by
+   how well you are already doing, which is what makes it worth another go.  */
+(function rangeGame(){
+  const panel   = document.getElementById('gamePanel');
+  const stage   = document.getElementById('gStage');
+  const canvas  = document.getElementById('gCanvas');
+  const reticle = document.getElementById('gReticle');
+  const overlay = document.getElementById('gOverlay');
+  if (!panel || !canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  const ROUND_MS   = 30000;
+  const LIFE_START = 1600;   // ms a target lasts at the start of a round
+  const LIFE_MIN   = 620;    // floor, so it stays humanly possible
+  const LIFE_STEP  = 42;     // shaved off per hit
+  // Fraction of the radius each ring covers, and what it pays.
+  const RINGS = [
+    { f: 0.20, pts: 10, key: 'bull' },
+    { f: 0.46, pts: 6 },
+    { f: 0.73, pts: 3 },
+    { f: 1.00, pts: 1 },
+  ];
+
+  const css = getComputedStyle(document.documentElement);
+  const COL = {
+    cream:  css.getPropertyValue('--ink').trim()       || '#f2efe9',
+    maroon: css.getPropertyValue('--maroon').trim()    || '#7a1f2b',
+    bright: css.getPropertyValue('--maroon-lt').trim() || '#a83244',
+    muted:  css.getPropertyValue('--muted').trim()     || '#8a8378',
+  };
+
+  /* A dead-centre hit rings a bell. Synthesised rather than an audio file so
+     it costs no request and cannot fail to load. The context is built lazily on
+     the first shot — browsers refuse to start audio before a user gesture. */
+  let audio = null, muted = false;
+  try { muted = localStorage.getItem('sto_range_muted') === '1'; } catch(e){}
+
+  function ding(){
+    if (muted) return;
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      if (!audio) audio = new AC();
+      if (audio.state === 'suspended') audio.resume();
+      const t = audio.currentTime;
+      const out = audio.createGain();
+      // exponential ramps, so it reads as a struck bell rather than a click
+      out.gain.setValueAtTime(0.0001, t);
+      out.gain.exponentialRampToValueAtTime(0.20, t + 0.006);
+      out.gain.exponentialRampToValueAtTime(0.0001, t + 0.40);
+      out.connect(audio.destination);
+      // Two partials (E6 + B6) — one sine alone sounds like a microwave.
+      [[1318.5, 1], [1975.5, 0.34]].forEach(([hz, level]) => {
+        const osc = audio.createOscillator(), g = audio.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(hz, t);
+        g.gain.value = level;
+        osc.connect(g); g.connect(out);
+        osc.start(t); osc.stop(t + 0.42);
+      });
+    } catch(e){}
+  }
+
+  let W = 0, H = 0, rMax = 34;      // stage size and spawn radius, in CSS px
+  let mode = 'idle';                // idle | playing | over
+  let target = null, holes = [], pops = [];
+  let score = 0, combo = 0, hits = 0, best = 0, roundEnd = 0, raf = null;
+
+  try { best = Number(localStorage.getItem('sto_range_best')) || 0; } catch(e){}
+  document.getElementById('gBest').textContent = best;
+
+  // Canvas is sized in device pixels but drawn in CSS pixels, so the rings stay
+  // sharp on a retina screen without any coordinate maths in the draw code.
+  function resize(){
+    const r = stage.getBoundingClientRect();
+    if (!r.width) return;
+    W = r.width; H = r.height;
+    // Proportional to the stage, so a phone and a wide desktop pose the same
+    // aiming problem rather than the small screen being brutally harder.
+    rMax = Math.max(24, Math.min(46, W * 0.155));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    draw();
+  }
+
+  function multiplier(){ return Math.min(1 + Math.floor(combo / 4), 5); }
+
+  function spawn(){
+    const life = Math.max(LIFE_MIN, LIFE_START - hits * LIFE_STEP);
+    const m = rMax + 6;
+    // Never land on top of the previous target — that would let a lucky
+    // double-click score twice without aiming.
+    let x, y, tries = 0;
+    do {
+      x = m + Math.random() * (W - m * 2);
+      y = m + Math.random() * (H - m * 2);
+      tries++;
+    } while (target && tries < 12 && Math.hypot(x - target.x, y - target.y) < rMax * 1.8);
+    target = { x, y, born: performance.now(), life };
+  }
+
+  function radiusNow(now){
+    if (!target) return 0;
+    const t = (now - target.born) / target.life;
+    return t >= 1 ? 0 : rMax * (1 - t);
+  }
+
+  function setHud(){
+    document.getElementById('gScore').textContent = score;
+    document.getElementById('gCombo').textContent = 'x' + multiplier();
+    document.getElementById('gComboWrap').classList.toggle('hot', multiplier() > 1);
+    document.getElementById('gTime').textContent =
+      Math.max(0, Math.ceil((roundEnd - performance.now()) / 1000));
+  }
+
+  function draw(){
+    if (!W) return;
+    ctx.clearRect(0, 0, W, H);
+
+    // Faint range backdrop so an idle panel is not a black square.
+    ctx.strokeStyle = 'rgba(255,255,255,.045)';
+    ctx.lineWidth = 1;
+    for (let i = 1; i < 4; i++){
+      ctx.beginPath(); ctx.moveTo(0, H * i / 4); ctx.lineTo(W, H * i / 4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(W * i / 4, 0); ctx.lineTo(W * i / 4, H); ctx.stroke();
+    }
+
+    const now = performance.now();
+
+    for (const h of holes){
+      const age = (now - h.t) / 2600;
+      if (age >= 1) continue;
+      ctx.globalAlpha = 0.75 * (1 - age);
+      ctx.fillStyle = '#0a0a0a';
+      ctx.beginPath(); ctx.arc(h.x, h.y, 3.1, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(h.x, h.y, 3.6, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    if (mode === 'playing' && target){
+      const r = radiusNow(now);
+      if (r > 0.5){
+        for (let i = RINGS.length - 1; i >= 0; i--){
+          ctx.fillStyle = i % 2 ? COL.cream : COL.maroon;
+          ctx.beginPath(); ctx.arc(target.x, target.y, r * RINGS[i].f, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.fillStyle = COL.bright;
+        ctx.beginPath(); ctx.arc(target.x, target.y, r * 0.09, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    for (const p of pops){
+      const age = (now - p.t) / 620;
+      if (age >= 1) continue;
+      ctx.globalAlpha = 1 - age;
+      ctx.fillStyle = p.good ? COL.cream : COL.muted;
+      ctx.font = '700 ' + (p.good ? 13 : 11) + 'px ' + css.getPropertyValue('--font');
+      ctx.textAlign = 'center';
+      ctx.fillText(p.text, p.x, p.y - age * 16);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  function tick(){
+    if (mode !== 'playing'){ raf = null; draw(); return; }
+    const now = performance.now();
+    if (now >= roundEnd){ endRound(); return; }
+    if (radiusNow(now) <= 0.5){ combo = 0; spawn(); }   // it got away
+    setHud();
+    draw();
+    raf = requestAnimationFrame(tick);
+  }
+
+  function shoot(e){
+    if (mode !== 'playing') return;
+    // Stops a touch from also producing an emulated mouse event, which would
+    // otherwise fire this twice and burn a shot.
+    e.preventDefault();
+    const r = stage.getBoundingClientRect();
+    const x = e.clientX - r.left, y = e.clientY - r.top;
+
+    reticle.classList.remove('recoil');
+    void reticle.offsetWidth;            // restart the animation
+    reticle.classList.add('recoil');
+
+    holes.push({ x, y, t: performance.now() });
+    if (holes.length > 14) holes.shift();
+
+    const rad = radiusNow(performance.now());
+    const d = target ? Math.hypot(x - target.x, y - target.y) : Infinity;
+    if (!target || rad <= 0.5 || d > rad){
+      combo = 0;
+      pops.push({ x, y, t: performance.now(), text: 'miss', good: false });
+      setHud();
+      return;
+    }
+    const f = d / rad;
+    const ring = RINGS.find(rg => f <= rg.f) || RINGS[RINGS.length - 1];
+    const gained = ring.pts * multiplier();
+    score += gained;
+    combo++;
+    hits++;
+    if (ring.key === 'bull') ding();
+    pops.push({ x, y, t: performance.now(),
+                text: (ring.key === 'bull' ? 'BULL +' : '+') + gained, good: true });
+    if (pops.length > 8) pops.shift();
+    spawn();
+    setHud();
+  }
+
+  function start(){
+    score = 0; combo = 0; hits = 0; holes = []; pops = [];
+    mode = 'playing';
+    roundEnd = performance.now() + ROUND_MS;
+    overlay.hidden = true;
+    stage.classList.add('armed');
+    resize();
+    spawn();
+    setHud();
+    // Always cancel-and-reschedule. Guarding on `if (!raf)` looks equivalent
+    // but is not: a backgrounded tab never fires its pending frame, so `raf`
+    // keeps a handle that will never resolve and the loop could never restart.
+    if (raf) cancelAnimationFrame(raf);
+    raf = requestAnimationFrame(tick);
+  }
+
+  function endRound(){
+    mode = 'over';
+    target = null;
+    if (raf){ cancelAnimationFrame(raf); raf = null; }
+    stage.classList.remove('armed');
+    if (score > best){
+      best = score;
+      try { localStorage.setItem('sto_range_best', String(best)); } catch(e){}
+      document.getElementById('gBest').textContent = best;
+    }
+    document.getElementById('gMsg').textContent = score + ' points';
+    document.getElementById('gSub').innerHTML =
+      (score >= best && score > 0 ? 'New best.' : 'Best ' + best + '.')
+      + '<br>' + hits + ' hit' + (hits === 1 ? '' : 's') + ' in 30 seconds.';
+    document.getElementById('gStart').textContent = 'Again';
+    overlay.hidden = false;
+    document.getElementById('gTime').textContent = '0';
+    draw();
+  }
+
+  function aim(e){
+    const r = stage.getBoundingClientRect();
+    reticle.style.transform = 'translate(' + (e.clientX - r.left) + 'px,' + (e.clientY - r.top) + 'px)';
+  }
+  stage.addEventListener('pointermove', aim);
+  // A tap produces no pointermove, so the reticle is placed on the way down —
+  // otherwise it would sit wherever the last shot landed.
+  stage.addEventListener('pointerdown', (e) => { aim(e); stage.classList.add('armed'); shoot(e); });
+  document.getElementById('gStart').addEventListener('click', start);
+
+  const muteBtn = document.getElementById('gMute');
+  function paintMute(){
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+    muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
+    muteBtn.title = muted ? 'Unmute the bullseye bell' : 'Mute the bullseye bell';
+  }
+  muteBtn.addEventListener('click', () => {
+    muted = !muted;
+    try { localStorage.setItem('sto_range_muted', muted ? '1' : '0'); } catch(e){}
+    paintMute();
+    if (!muted) ding();          // confirm it is back on
+  });
+  paintMute();
+
+  // Leaving the stage mid-round would strand the reticle, and a round running
+  // in a hidden tab just burns the clock.
+  stage.addEventListener('pointerleave', () => { if (mode === 'playing') stage.classList.remove('armed'); });
+  stage.addEventListener('pointerenter', () => { if (mode === 'playing') stage.classList.add('armed'); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden && mode === 'playing') endRound(); });
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
 
 /* ── guard: config.js must be filled in ─────────────────────────────── */
 const CONFIGURED = typeof window.SUPABASE_URL === 'string' && window.SUPABASE_URL.startsWith('http')
@@ -310,6 +748,50 @@ const REACTIONS = [
   { kind: 'hundred', label: '💯' },
 ];
 
+const MEDIA_BUCKET = 'post-media';
+
+/* Resolves to true only if the user actually confirms. Escape and the backdrop
+   both count as "no", so a stray click can never delete a post. */
+function confirmDialog(title, body, okLabel){
+  return new Promise(resolve => {
+    const root = document.getElementById('modalRoot');
+    root.innerHTML =
+      '<div id="modal"><div class="sheet" role="dialog" aria-modal="true">'
+      + '<h3>' + escapeHtml(title) + '</h3>'
+      + '<p>' + escapeHtml(body) + '</p>'
+      + '<div class="row">'
+        + '<button class="btn ghost" data-no>Cancel</button>'
+        + '<button class="btn" data-yes>' + escapeHtml(okLabel || 'Confirm') + '</button>'
+      + '</div></div></div>';
+
+    function close(answer){
+      root.innerHTML = '';
+      document.removeEventListener('keydown', onKey);
+      resolve(answer);
+    }
+    function onKey(e){ if (e.key === 'Escape') close(false); }
+
+    root.querySelector('[data-yes]').addEventListener('click', () => close(true));
+    root.querySelector('[data-no]').addEventListener('click', () => close(false));
+    root.querySelector('#modal').addEventListener('click', (e) => {
+      if (e.target.id === 'modal') close(false);
+    });
+    document.addEventListener('keydown', onKey);
+    root.querySelector('[data-no]').focus();
+  });
+}
+
+/* A public storage URL looks like …/object/public/<bucket>/<path>. Only files
+   that really live in our bucket are returned — a Facebook embed or any other
+   external link yields null and is left alone. */
+function storagePathFromUrl(url){
+  const marker = '/object/public/' + MEDIA_BUCKET + '/';
+  const i = String(url || '').indexOf(marker);
+  if (i === -1) return null;
+  try { return decodeURIComponent(String(url).slice(i + marker.length).split('?')[0]) || null; }
+  catch(e){ return null; }
+}
+
 /* ── auth state ──────────────────────────────────────────────────────── */
 let session  = null;
 let isAuthor = false;
@@ -331,8 +813,9 @@ async function checkSession(){
 }
 
 function paintAuthUI(){
-  document.getElementById('composeBtn').hidden   = !isAuthor;
-  document.getElementById('dashboardBtn').hidden = !isAuthor;
+  document.getElementById('composeBtn').hidden     = !isAuthor;
+  document.getElementById('profileEditBtn').hidden = !isAuthor;
+  document.getElementById('dashboardBtn').hidden   = !isAuthor;
   document.getElementById('signInBtn').hidden    = !!session;
   document.getElementById('signOutBtn').hidden   = !session;
   document.getElementById('whoami').textContent  = session
@@ -348,6 +831,7 @@ document.getElementById('signOutBtn').addEventListener('click', async () => {
   navigate('/');
 });
 document.getElementById('composeBtn').addEventListener('click', () => navigate('/compose'));
+document.getElementById('profileEditBtn').addEventListener('click', () => navigate('/profile-images'));
 document.getElementById('dashboardBtn').addEventListener('click', () => navigate('/dashboard'));
 document.getElementById('feedLink').addEventListener('click', (e) => { e.preventDefault(); navigate('/'); });
 
@@ -376,12 +860,71 @@ async function addComment(postId, name, body){
   if (error){ toast(error.message || 'Comment failed'); return null; }
   return data;
 }
+/* Deleting the post row cascades to its assets, comments, reactions and
+   events (see the foreign keys in schema.sql). What does NOT cascade is the
+   uploaded file behind each asset, so those are removed first — otherwise
+   every deleted post leaves its photos sitting in the storage quota forever.
+   The file sweep is best-effort: if it fails, the post still goes. */
+async function deletePost(postId, assets){
+  const paths = (assets || []).map(a => storagePathFromUrl(a.url)).filter(Boolean);
+  if (paths.length){
+    const { error } = await supa.storage.from(MEDIA_BUCKET).remove(paths);
+    if (error) console.warn('post media not removed:', error.message);
+  }
+  const { error } = await supa.from('posts').delete().eq('id', postId);
+  if (error){ toast('Delete failed: ' + error.message); return false; }
+  toast('Post deleted');
+  return true;
+}
+
 function trackEvent(postId, type){
   supa.rpc('track_event', {
     p_post_id: postId, p_visitor_id: visitorId(), p_session_id: sessionId(),
     p_type: type, p_referrer: document.referrer ? new URL(document.referrer).hostname : null,
     p_device: deviceType()
   }).then(()=>{}, ()=>{});
+}
+
+/* ── profile carousel (author-editable) ──────────────────────────────── */
+const PROFILE_MEDIA_KEY = 'profile_carousel';
+let profileMedia = DEFAULT_PROFILE_MEDIA.slice();
+
+async function loadProfileMedia(){
+  const { data, error } = await supa.from('site_settings')
+    .select('value').eq('key', PROFILE_MEDIA_KEY).maybeSingle();
+  // A missing table means site-settings.sql has not been run yet. That is not
+  // worth shouting about on a visitor's screen — the shipped slides still show.
+  if (error){ console.warn('profile media:', error.message); return; }
+  const items = data && data.value && Array.isArray(data.value.items) ? data.value.items : null;
+  if (items && items.length){
+    profileMedia = items;
+    renderProfileCarousel();
+  }
+}
+
+async function saveProfileMedia(items){
+  const { error } = await supa.from('site_settings')
+    .upsert({ key: PROFILE_MEDIA_KEY, value: { items }, updated_at: new Date().toISOString() },
+            { onConflict: 'key' });
+  if (error){ toast('Could not save: ' + error.message); return false; }
+  profileMedia = items;
+  renderProfileCarousel();
+  return true;
+}
+
+function profileSlideHtml(m){
+  if (m.kind === 'video') return '<div class="slide"><video src="'+escapeHtml(m.url)+'" muted autoplay loop playsinline></video></div>';
+  return '<div class="slide"><img src="'+escapeHtml(m.url)+'" alt="'+escapeHtml(m.alt||'STO Supply Co')+'"/></div>';
+}
+
+// Rebuilds the whole element: initCarousel appends its own arrows and dots, so
+// re-running it over a used root would stack a second set on top.
+function renderProfileCarousel(){
+  const root = document.getElementById('profileCarousel');
+  if (!root) return;
+  const items = profileMedia.length ? profileMedia : DEFAULT_PROFILE_MEDIA;
+  root.innerHTML = '<div class="track">' + items.map(profileSlideHtml).join('') + '</div>';
+  initCarousel(root, true);
 }
 
 /* ── rendering ───────────────────────────────────────────────────────── */
@@ -420,12 +963,19 @@ function galleryHtml(assets){
        + assets.map(assetHtml).join('') + '</div></div></div>';
 }
 
+// Rendered only for a signed-in author; a visitor never receives the markup,
+// and the RLS delete policy is the real gate behind it either way.
+function ownerControlsHtml(){
+  return isAuthor ? '<span class="owner"><button data-delete>Delete</button></span>' : '';
+}
+
 function postCardHtml(p){
   return '<article class="box post" data-slug="'+escapeHtml(p.slug)+'" data-id="'+p.id+'">'
     + '<div class="head">'
       + '<span class="author">'+escapeHtml(p.author)+'</span>'
       + '<span class="when">'+timeAgo(p.published_at)+'</span>'
       + (p.status === 'draft' ? '<span class="draft-tag">Draft</span>' : '')
+      + ownerControlsHtml()
     + '</div>'
     + '<div class="caption" data-open="'+escapeHtml(p.slug)+'">'+escapeHtml(p.caption)+'</div>'
     + galleryHtml(p.assets)
@@ -465,6 +1015,26 @@ function wireCard(el){
     n.addEventListener('click', () => navigate('/p/' + n.dataset.open));
   });
   wireReactButtons(el);
+  wireOwnerControls(el, null);
+}
+
+// `assets` is passed on the single-post view, where the gallery comes back in a
+// separate field; on a feed card it is stashed on the element by viewFeed().
+function wireOwnerControls(container, assets){
+  const del = container.querySelector('[data-delete]');
+  if (!del) return;
+  del.addEventListener('click', async (e) => {
+    e.stopPropagation();
+    const ok = await confirmDialog(
+      'Delete this post?',
+      'This removes the post, its photos, and every comment and reaction on it. It cannot be undone.',
+      'Delete post');
+    if (!ok) return;
+    del.disabled = true;
+    const gone = await deletePost(container.dataset.id, assets || container._assets);
+    if (!gone){ del.disabled = false; return; }
+    navigate('/');
+  });
 }
 function doShare(slug, postId){
   const url = location.origin + '/p/' + slug;
@@ -486,9 +1056,10 @@ async function viewFeed(){
     return;
   }
   mainEl.innerHTML = posts.map(postCardHtml).join('');
-  Array.from(mainEl.children).forEach((el) => {
+  Array.from(mainEl.children).forEach((el, idx) => {
     const c = el.querySelector('.carousel');
     if (c) initCarousel(c, false);
+    el._assets = posts[idx].assets;   // so a delete can sweep the storage files
     wireCard(el);
   });
 }
@@ -516,6 +1087,7 @@ async function viewSinglePost(slug){
       + '<div class="head"><span class="author">'+escapeHtml(p.author)+'</span>'
         + '<span class="when">'+timeAgo(p.published_at)+'</span>'
         + (p.status === 'draft' ? '<span class="draft-tag">Draft</span>' : '')
+        + ownerControlsHtml()
       + '</div>'
       + '<div class="caption">'+escapeHtml(p.caption)+'</div>'
       + galleryHtml(data.assets)
@@ -536,6 +1108,7 @@ async function viewSinglePost(slug){
   const article = mainEl.querySelector('article');
   initCarousel(article.querySelector('.carousel'), false);
   wireReactButtons(article);
+  wireOwnerControls(article, data.assets);
 
   document.getElementById('commentForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -611,14 +1184,14 @@ function paintAssetList(){
   });
 }
 
-async function uploadFile(file){
+async function uploadFile(file, prefix){
   const ext = (file.name.split('.').pop() || 'bin').toLowerCase();
-  const path = 'composer/' + uuid() + '.' + ext;
-  const { error } = await supa.storage.from('post-media').upload(path, file, {
+  const path = (prefix || 'composer') + '/' + uuid() + '.' + ext;
+  const { error } = await supa.storage.from(MEDIA_BUCKET).upload(path, file, {
     contentType: file.type, upsert: false
   });
   if (error) throw error;
-  const { data } = supa.storage.from('post-media').getPublicUrl(path);
+  const { data } = supa.storage.from(MEDIA_BUCKET).getPublicUrl(path);
   return data.publicUrl;
 }
 
@@ -731,6 +1304,96 @@ function viewComposer(){
   document.getElementById('cpPublish').addEventListener('click', () => submit('published'));
 }
 
+/* ── profile image editor ────────────────────────────────────────────── */
+// Edits a working copy; nothing reaches the site until Save. Files upload as
+// they are picked, so Save only ever writes URLs that already exist.
+function viewProfileEdit(){
+  let items = profileMedia.map(m => Object.assign({}, m));
+
+  mainEl.innerHTML =
+    '<div class="box" id="profileEdit">'
+    + '<div class="dash-title" style="margin-top:0">Profile carousel</div>'
+    + '<p class="hint">These are the images beside the logo. Drag order is set with the arrows; '
+      + 'the carousel rotates every 4 seconds.</p>'
+    + '<div class="field" style="margin-top:10px">'
+      + '<input type="file" id="peFiles" accept="image/*,video/*" multiple/>'
+      + '<div class="slots" id="peSlots"></div>'
+    + '</div>'
+    + '<div class="actions" style="display:flex;gap:8px;align-items:center;margin-top:14px">'
+      + '<button class="btn ghost" id="peReset">Reset to default</button>'
+      + '<button class="btn" id="peSave">Save</button>'
+      + '<span class="hint" id="peStatus"></span>'
+    + '</div>'
+    + '<div class="err" id="peErr" hidden></div>'
+  + '</div>';
+
+  function paint(){
+    const el = document.getElementById('peSlots');
+    el.innerHTML = items.map((m, idx) =>
+      '<div class="slot">'
+      + (m.kind === 'video' ? '<video src="'+escapeHtml(m.url)+'" muted></video>'
+                            : '<img src="'+escapeHtml(m.url)+'"/>')
+      + (m.uploading ? '<div class="uploading">uploading…</div>' : '')
+      + '<button class="rm" data-rm="'+idx+'" title="Remove">&times;</button>'
+      + (idx > 0 ? '<button class="mv l" data-mv="'+idx+'" data-dir="-1" title="Move left">&#8249;</button>' : '')
+      + (idx < items.length - 1 ? '<button class="mv r" data-mv="'+idx+'" data-dir="1" title="Move right">&#8250;</button>' : '')
+      + '</div>').join('') || '<div class="hint">No images — the default pair will be shown.</div>';
+
+    el.querySelectorAll('[data-rm]').forEach(b => b.addEventListener('click', () => {
+      items.splice(Number(b.dataset.rm), 1); paint();
+    }));
+    el.querySelectorAll('[data-mv]').forEach(b => b.addEventListener('click', () => {
+      const i = Number(b.dataset.mv), j = i + Number(b.dataset.dir);
+      if (j < 0 || j >= items.length) return;
+      const t = items[i]; items[i] = items[j]; items[j] = t;
+      paint();
+    }));
+  }
+  paint();
+
+  document.getElementById('peFiles').addEventListener('change', async (e) => {
+    const files = Array.from(e.target.files || []);
+    e.target.value = '';
+    for (const file of files){
+      const kind = file.type.startsWith('video') ? 'video' : 'photo';
+      const entry = { kind, url: URL.createObjectURL(file), alt: '', uploading: true };
+      items.push(entry); paint();
+      try {
+        entry.url = await uploadFile(file, 'profile');
+        entry.uploading = false;
+      } catch (err){
+        toast('Upload failed: ' + err.message);
+        items.splice(items.indexOf(entry), 1);
+      }
+      paint();
+    }
+  });
+
+  document.getElementById('peSave').addEventListener('click', async () => {
+    const errEl = document.getElementById('peErr');
+    const statusEl = document.getElementById('peStatus');
+    errEl.hidden = true;
+    if (items.some(m => m.uploading)){
+      errEl.textContent = 'Still uploading — wait for it to finish.';
+      errEl.hidden = false;
+      return;
+    }
+    statusEl.textContent = 'Saving…';
+    const clean = items.map(m => ({ kind: m.kind, url: m.url, alt: m.alt || '' }));
+    const ok = await saveProfileMedia(clean);
+    statusEl.textContent = '';
+    if (ok){ toast('Profile images updated'); navigate('/'); }
+  });
+
+  document.getElementById('peReset').addEventListener('click', async () => {
+    const ok = await confirmDialog('Reset profile images?',
+      'The carousel goes back to the two images shipped with the site.', 'Reset');
+    if (!ok) return;
+    items = DEFAULT_PROFILE_MEDIA.map(m => Object.assign({}, m));
+    paint();
+  });
+}
+
 /* ── dashboard ───────────────────────────────────────────────────────── */
 async function viewDashboard(){
   mainEl.innerHTML = '<div class="box empty">Loading…</div>';
@@ -790,6 +1453,10 @@ function route(){
     if (!isAuthor){ navigate('/signin'); return; }
     viewDashboard(); return;
   }
+  if (path === '/profile-images') {
+    if (!isAuthor){ navigate('/signin'); return; }
+    viewProfileEdit(); return;
+  }
   const m = path.match(/^\/p\/([^/]+)$/);
   if (m) { viewSinglePost(decodeURIComponent(m[1])); return; }
   viewFeed();
@@ -808,6 +1475,7 @@ window.addEventListener('popstate', route);
   } catch(e){}
 
   await checkSession();
+  loadProfileMedia();          // not awaited: the shipped slides are already up
   supa.auth.onAuthStateChange(async (_event, sess) => {
     session = sess;
     await refreshAuthorStatus();
