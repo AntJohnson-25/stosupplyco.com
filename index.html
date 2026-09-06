@@ -4,7 +4,7 @@
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>STO Supply Co — Cleveland, Ohio 2A &amp; Firearms Community</title>
-<meta name="description" content="STO Supply Co — Second Amendment advocacy and firearms culture in Cleveland, Ohio. Range days, gear and 2A news from Black gun owners in Northeast Ohio."/>
+<meta name="description" content="STO Supply Co — Second Amendment advocacy and firearms culture in Cleveland, Ohio. Range days, gear reviews and 2A news from Black gun owners in Northeast Ohio. Open to brand partnerships, sponsorships and product reviews."/>
 <link rel="canonical" href="https://stosupplyco.com/"/>
 <meta name="robots" content="index,follow,max-image-preview:large"/>
 <meta name="author" content="STO Supply Co"/>
@@ -12,7 +12,7 @@
 <!-- Google has ignored this since 2009; kept only for the handful of smaller
      engines that still read it. The ranking work is the title, the description
      and the JSON-LD below. -->
-<meta name="keywords" content="2A, Second Amendment, Black gun owners, Black gun lovers, Cleveland firearms, Ohio firearms, Northeast Ohio firearms, Ohio 2A, Northeast Ohio shooting, concealed carry Ohio, firearms range Cleveland, STO Supply Co"/>
+<meta name="keywords" content="2A, Second Amendment, Black gun owners, Black gun lovers, Cleveland firearms, Ohio firearms, Northeast Ohio firearms, Ohio 2A, Northeast Ohio shooting, concealed carry Ohio, firearms range Cleveland, STO Supply Co, firearms brand partnerships, 2A brand deals, firearms influencer, gun content creator, EDC product reviews, shooting sports sponsorship, gear collaborations, media kit"/>
 
 <!-- New filenames rather than overwrites: browsers and link scrapers cache the
      old art by URL, so reusing the paths would leave the previous mark showing
@@ -24,7 +24,7 @@
      would simply fail to resolve. -->
 <meta property="og:site_name" content="STO Supply Co"/>
 <meta property="og:title" content="STO Supply Co — Cleveland, Ohio 2A &amp; Firearms Community"/>
-<meta property="og:description" content="Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear talk and 2A news from Black gun owners in Northeast Ohio."/>
+<meta property="og:description" content="Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear talk and 2A news from Black gun owners in Northeast Ohio. Brand partnerships and product reviews welcome."/>
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://stosupplyco.com/"/>
 <meta property="og:locale" content="en_US"/>
@@ -35,8 +35,9 @@
 
 <meta name="twitter:card" content="summary_large_image"/>
 <meta name="twitter:title" content="STO Supply Co — Cleveland, Ohio 2A &amp; Firearms Community"/>
-<meta name="twitter:description" content="Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear talk and 2A news from Black gun owners in Northeast Ohio."/>
+<meta name="twitter:description" content="Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear talk and 2A news from Black gun owners in Northeast Ohio. Brand partnerships and product reviews welcome."/>
 <meta name="twitter:image" content="https://stosupplyco.com/assets/og-card-2026.jpg"/>
+<meta name="twitter:image:alt" content="STO Supply Co badge — mountains over the STO lockup, with the tagline Be your own 1st responder x Carry every day"/>
 
 <script type="application/ld+json">
 {
@@ -49,8 +50,21 @@
       "url": "https://stosupplyco.com/",
       "logo": "https://stosupplyco.com/assets/sto-badge-2026.png",
       "image": "https://stosupplyco.com/assets/og-card-2026.jpg",
-      "description": "Second Amendment advocacy and firearms culture out of Cleveland, Ohio.",
+      "description": "Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Available for brand partnerships, sponsorships and firearms product reviews.",
+      "slogan": "Be prepared. Stay ready. Carry every day.",
       "foundingDate": "2023",
+      "email": "alontaesto@gmail.com",
+      "contactPoint": [
+        {
+          "@type": "ContactPoint",
+          "@id": "https://stosupplyco.com/#partnerships",
+          "contactType": "Partnerships and sponsorships",
+          "name": "Brand partnerships",
+          "email": "alontaesto@gmail.com",
+          "availableLanguage": "English",
+          "areaServed": "US"
+        }
+      ],
       "address": {
         "@type": "PostalAddress",
         "addressLocality": "Cleveland",
@@ -63,7 +77,8 @@
       ],
       "knowsAbout": [
         "Second Amendment", "firearms", "firearm safety", "concealed carry",
-        "Ohio firearm laws", "shooting sports"
+        "Ohio firearm laws", "shooting sports", "everyday carry gear",
+        "firearms product reviews", "brand partnerships", "sponsored content"
       ]
     },
     {
@@ -113,7 +128,14 @@ a{color:var(--maroon-lt)}
    sticky so it stays put while the feed scrolls past it. */
 /* min() so it shrinks with the gutter on a narrow desktop instead of
    overflowing it — the track is 1fr and will not hold a fixed 300px. */
-.game-col{grid-area:game;justify-self:end;width:min(300px,100%);position:sticky;top:22px;padding:12px}
+/* The column is now a stack — the range card plus the contact card — so the
+   padding moved off it and onto each card. Sticky is kept, but the stack can
+   run taller than the viewport, so it scrolls internally rather than pinning
+   the bottom of the contact form out of reach. */
+.game-col{grid-area:game;justify-self:end;width:min(300px,100%);
+  position:sticky;top:22px;max-height:calc(100vh - 44px);overflow-y:auto;
+  display:flex;flex-direction:column;gap:18px}
+.game-panel{padding:12px}
 main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 
@@ -302,6 +324,39 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 .game-hud b{color:var(--ink);font-weight:700}
 .game-hud .hot b{color:var(--maroon-lt)}
 
+/* ── partnership contact card ────────────────────────────────── */
+/* Sits under the range in the right gutter. Same 12px padding and card chrome
+   as the game panel so the two read as one column rather than two widgets. */
+.contact-card{padding:12px}
+/* Collapsed by default: the whole form sitting open pushed the range off a
+   laptop screen, and a brand looking to reach out will click the header. The
+   copy is in the DOM either way, so nothing here is hidden from a crawler. */
+/* Negative margin cancels the padding visually: the row still sits flush with
+   the card edge, but the tap target is ~22px tall instead of the 13px the
+   title's line box would give it on a phone. */
+.c-toggle{display:flex;align-items:center;justify-content:space-between;gap:8px;
+  width:100%;border:0;padding:5px 0;margin:-5px 0;cursor:pointer;text-align:left}
+.contact-card .c-title{font-weight:700;font-size:12px;letter-spacing:.5px;
+  text-transform:uppercase}
+/* Drawn from a border so it inherits the text colour and needs no glyph font. */
+.c-toggle .chev{flex-shrink:0;width:7px;height:7px;margin-top:-3px;
+  border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);
+  transform:rotate(45deg);transition:transform .18s ease}
+.c-toggle[aria-expanded="true"] .chev{transform:rotate(-135deg);margin-top:2px}
+.c-toggle:hover .chev{border-color:var(--ink-2)}
+#contactBody{margin-top:10px}
+.contact-card .c-copy{font-size:12px;line-height:1.55;color:var(--ink-2);margin-bottom:12px}
+.contact-card .c-field{margin-bottom:9px}
+.contact-card label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;
+  color:var(--muted);margin-bottom:4px}
+.contact-card input,.contact-card textarea{width:100%;background:var(--surface-2);
+  border:1px solid var(--line);border-radius:6px;padding:7px 8px;color:var(--ink)}
+.contact-card textarea{resize:vertical;min-height:64px}
+.contact-card input::placeholder,.contact-card textarea::placeholder{color:var(--muted)}
+.contact-card .btn{width:100%;margin-top:3px}
+.contact-card .c-direct{font-size:11px;color:var(--muted);margin-top:10px;
+  padding-top:9px;border-top:1px solid var(--line);word-break:break-word}
+
 /* ── confirm dialog ──────────────────────────────────────────── */
 /* Deleting a post is irreversible and cascades to its comments and
    reactions, so it gets a real confirmation rather than window.confirm. */
@@ -343,7 +398,10 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
   .page{grid-template-columns:minmax(0,520px);grid-template-areas:"profile" "game" "main";
     justify-content:center}
   .profile-col{position:static;width:340px;justify-self:center}
-  .game-col{position:static;width:100%;max-width:320px;justify-self:center}
+  /* Stacked, the column is no longer pinned, so the height cap and its
+     scrollbar would only get in the way. */
+  .game-col{position:static;width:100%;max-width:320px;justify-self:center;
+    max-height:none;overflow:visible}
 }
 
 @media (max-width:640px){
@@ -407,7 +465,8 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
     </div>
   </noscript></main>
 
-  <aside class="box game-col" id="gamePanel" aria-label="Bullseye mini game">
+  <div class="game-col">
+  <aside class="box game-panel" id="gamePanel" aria-label="Bullseye mini game">
     <div class="game-head">
       <span class="g-title">The Range</span>
       <span class="g-right">
@@ -430,6 +489,51 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
       <span>Time <b id="gTime">30</b></span>
     </div>
   </aside>
+
+  <!-- Real, crawlable copy rather than a bare mailto: the words here are what a
+       brand searching for a Cleveland 2A creator actually matches on, and the
+       address is repeated in the Organization contactPoint above. -->
+  <section class="box contact-card" id="contact" aria-labelledby="contactTitle">
+    <h2 id="contactTitle">
+      <button type="button" class="c-toggle" id="contactToggle"
+              aria-expanded="false" aria-controls="contactBody">
+        <span class="c-title">Work with STO</span>
+        <span class="chev" aria-hidden="true"></span>
+      </button>
+    </h2>
+
+    <div id="contactBody" hidden>
+    <p class="c-copy">
+      Brand partnerships, sponsorships, product reviews and range-day
+      collaborations — send it over and we'll get back to you.
+    </p>
+
+    <!-- No backend on this host, so the form composes a mailto: instead of
+         posting. Every field is optional; the plain link under it is the
+         fallback for anyone without a mail client wired up. -->
+    <form id="contactForm" novalidate>
+      <div class="c-field">
+        <label for="cName">Name / brand</label>
+        <input type="text" id="cName" autocomplete="organization" placeholder="Who's reaching out"/>
+      </div>
+      <div class="c-field">
+        <label for="cEmail">Your email</label>
+        <input type="email" id="cEmail" autocomplete="email" placeholder="you@brand.com"/>
+      </div>
+      <div class="c-field">
+        <label for="cMsg">Message</label>
+        <textarea id="cMsg" placeholder="What you have in mind"></textarea>
+      </div>
+      <button class="btn" type="submit">Send email</button>
+    </form>
+
+    <p class="c-direct">
+      Or email directly:
+      <a href="mailto:alontaesto@gmail.com?subject=Partnership%20inquiry%20%E2%80%94%20STO%20Supply%20Co">alontaesto@gmail.com</a>
+    </p>
+    </div>
+  </section>
+  </div>
 
 </div>
 
@@ -1766,6 +1870,46 @@ window.addEventListener('popstate', route);
     paintAuthUI();
   });
   route();
+})();
+
+/* ── partnership contact form ─────────────────────────────────────────────
+   There is no server to post to — the site is static on GitHub Pages — so the
+   form hands the browser a pre-filled mailto:. The <a> under it stays as the
+   fallback for anyone whose machine has no mail client registered, which is
+   why nothing here is required and the form never blocks on validation. */
+(function contactForm(){
+  const form = document.getElementById('contactForm');
+  if (!form) return;
+  const TO = 'alontaesto@gmail.com';
+
+  /* The panel ships collapsed. Focus moves to the first field on open so a
+     keyboard user lands in the form rather than back at the top of the card. */
+  const toggle = document.getElementById('contactToggle');
+  const body   = document.getElementById('contactBody');
+  toggle.addEventListener('click', () => {
+    const open = toggle.getAttribute('aria-expanded') === 'true';
+    toggle.setAttribute('aria-expanded', String(!open));
+    body.hidden = open;
+    if (!open) document.getElementById('cName').focus();
+  });
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const name  = document.getElementById('cName').value.trim();
+    const email = document.getElementById('cEmail').value.trim();
+    const msg   = document.getElementById('cMsg').value.trim();
+
+    const subject = name
+      ? `Partnership inquiry — ${name}`
+      : 'Partnership inquiry — STO Supply Co';
+    /* The reply address goes in the body too: a mailto: sends from whatever
+       account the client is signed into, which is often not the one typed. */
+    const body = [msg, '', email ? `Reply to: ${email}` : '', '— sent from stosupplyco.com']
+      .filter(Boolean).join('\n');
+
+    window.location.href =
+      `mailto:${TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  });
 })();
 
 })();

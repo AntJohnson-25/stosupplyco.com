@@ -185,6 +185,35 @@ site should never be forced on a visitor.
   vs `zoneAt`'s hypot). They must stay identical or the game lies about where to
   aim. Currently `(54, -64) r11` in both.
 
+## Third pass: partnership contact + brand-deal SEO (06 Sep 2026)
+
+**"Work with STO" card.** A collapsed disclosure under the range game in the
+right gutter. The header is a `<button>` inside the `<h2>` with
+`aria-expanded`/`aria-controls` and a CSS-border chevron; opening reveals the
+pitch copy, a name/brand + email + message form, and the address in plain text.
+Collapsed by default because the open form pushed the range off a laptop screen.
+The panel uses the `hidden` attribute rather than being removed, so all of the
+partnership copy and the address stay in the DOM for crawlers either way. The
+game column became a flex stack, still sticky, now capped at viewport height
+with internal scroll so the form's bottom cannot be pinned out of reach; under
+1000px the cap is dropped and the two cards stack as before.
+
+**The form does not send anything.** Static host, no server — it composes a
+pre-filled `mailto:alontaesto@gmail.com` and hands it to the visitor's own mail
+client. The typed reply address is repeated in the body because a `mailto:`
+sends from whichever account the client is signed into, which is often not the
+one they typed. Nothing is required, so the form never blocks on validation, and
+the plain link underneath is the fallback for a machine with no mail handler
+registered.
+
+**Brand-deal SEO.** `description`, `og:description` and `twitter:description`
+now end on an explicit partnerships/product-reviews line; the missing
+`twitter:image:alt` was added; `keywords` gained the brand-deal terms. The real
+work is in the JSON-LD: `Organization` now carries `email`, `slogan`, and a
+`contactPoint` with `contactType: "Partnerships and sponsorships"` — the
+machine-readable signal a brand's research tooling reads — plus `knowsAbout`
+entries for product reviews and sponsored content.
+
 ## Anthony's (or client's) setup queue
 
 - [x] **Supabase account** (05 Sep 2026) — separate account, signed in via the
@@ -233,6 +262,17 @@ or a decision from the client.
       against a stubbed DOM and its artwork by re-rendering the same
       coordinates offline, but the animation itself — rise, knockdown pivot,
       drifting clouds, reticle — has never been seen in a browser.
+- [ ] **Capture brand inquiries server-side instead of by `mailto:`.** Deferred
+      on 06 Sep 2026 — noted for later, not wanted now. The contact form hands
+      the visitor a draft; it does not send. Two consequences: a desktop
+      visitor with no mail handler registered sees the button do nothing, and
+      an abandoned draft leaves no trace, so you never learn an inquiry was
+      attempted. The fix is to write submissions to a Supabase `inquiries`
+      table (public insert / author read, same RLS pattern as comments) so
+      every attempt is captured and readable from the dashboard, optionally
+      plus an Edge Function or Formspree to push a real notification to
+      `alontaesto@gmail.com`. Only worth building once brand deals actually
+      start coming in.
 - [ ] **A dead Facebook embed.** The second post's reel renders "Video
       Unavailable" — it is gone or not public. Fix or delete that post.
 - [ ] Verify the site in Google Search Console and submit `sitemap.xml`. Add
