@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Only the root is listed. Individual posts live at /p/<slug>, which GitHub
+     Pages cannot serve directly: a hard load falls through to 404.html and is
+     bounced back to "/", so those URLs are not indexable and must not be
+     advertised here. See the SEO note in TODO.md. -->
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://stosupplyco.com/</loc>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+</urlset>

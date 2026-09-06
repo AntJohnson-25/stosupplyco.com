@@ -3,12 +3,77 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>STO Supply Co</title>
+<title>STO Supply Co — Cleveland, Ohio 2A &amp; Firearms Community</title>
+<meta name="description" content="STO Supply Co — Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear and 2A news from Black gun owners in Northeast Ohio."/>
+<link rel="canonical" href="https://stosupplyco.com/"/>
+<meta name="robots" content="index,follow,max-image-preview:large"/>
+<meta name="author" content="STO Supply Co"/>
+<meta name="theme-color" content="#141414"/>
+<!-- Google has ignored this since 2009; kept only for the handful of smaller
+     engines that still read it. The ranking work is the title, the description
+     and the JSON-LD below. -->
+<meta name="keywords" content="2A, Second Amendment, Black gun owners, Black gun lovers, Cleveland guns, Ohio guns, Cleveland firearms, Ohio 2A, Northeast Ohio shooting, concealed carry Ohio, gun range Cleveland, STO Supply Co"/>
+
 <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32.png"/>
 <link rel="apple-touch-icon" sizes="180x180" href="assets/favicon-180.png"/>
-<meta property="og:title" content="STO Supply Co"/>
+
+<!-- Absolute URLs: crawlers fetch these out of context, so a relative path
+     would simply fail to resolve. -->
+<meta property="og:site_name" content="STO Supply Co"/>
+<meta property="og:title" content="STO Supply Co — Cleveland, Ohio 2A &amp; Firearms Community"/>
+<meta property="og:description" content="Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear talk and 2A news from Black gun owners in Northeast Ohio."/>
 <meta property="og:type" content="website"/>
-<meta property="og:image" content="assets/sto-logo.png"/>
+<meta property="og:url" content="https://stosupplyco.com/"/>
+<meta property="og:locale" content="en_US"/>
+<meta property="og:image" content="https://stosupplyco.com/assets/og-card.jpg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image:alt" content="STO Supply Co emblem — shield, bullet and rifle"/>
+
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:title" content="STO Supply Co — Cleveland, Ohio 2A &amp; Firearms Community"/>
+<meta name="twitter:description" content="Second Amendment advocacy and firearms culture out of Cleveland, Ohio. Range days, gear talk and 2A news from Black gun owners in Northeast Ohio."/>
+<meta name="twitter:image" content="https://stosupplyco.com/assets/og-card.jpg"/>
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://stosupplyco.com/#org",
+      "name": "STO Supply Co",
+      "url": "https://stosupplyco.com/",
+      "logo": "https://stosupplyco.com/assets/sto-logo.png",
+      "image": "https://stosupplyco.com/assets/og-card.jpg",
+      "description": "Second Amendment advocacy and firearms culture out of Cleveland, Ohio.",
+      "foundingDate": "2023",
+      "address": {
+        "@type": "PostalAddress",
+        "addressLocality": "Cleveland",
+        "addressRegion": "OH",
+        "addressCountry": "US"
+      },
+      "areaServed": [
+        { "@type": "City",  "name": "Cleveland" },
+        { "@type": "State", "name": "Ohio" }
+      ],
+      "knowsAbout": [
+        "Second Amendment", "firearms", "gun safety", "concealed carry",
+        "Ohio gun laws", "shooting sports"
+      ]
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://stosupplyco.com/#site",
+      "url": "https://stosupplyco.com/",
+      "name": "STO Supply Co",
+      "publisher": { "@id": "https://stosupplyco.com/#org" },
+      "inLanguage": "en-US"
+    }
+  ]
+}
+</script>
 <style>
 :root{
   --bg:#141414; --surface:#1c1c1c; --surface-2:#242424; --line:#2c2c2c;
@@ -289,7 +354,7 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
           <div class="slide"><img src="assets/sto-02.jpg" alt="STO Supply Co"/></div>
         </div>
       </div>
-      <div class="name">STO Supply Co</div>
+      <h1 class="name">STO Supply Co</h1>
       <div class="role">Daddy, Life Saver, Springfield Armory Lover</div>
       <div class="bio">Cleveland, OH · 2A Advocate</div>
       <div id="profileFooter">
@@ -304,7 +369,19 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
     </aside>
   </div>
 
-  <main id="main"></main>
+  <!-- The feed is fetched from Supabase and rendered client-side, so a crawler
+       that does not execute JavaScript would otherwise find an empty page.
+       This is replaced the moment the app paints. -->
+  <main id="main"><noscript>
+    <div class="box" style="padding:14px">
+      <h2 style="font-size:15px;margin-bottom:8px">Second Amendment culture from Cleveland, Ohio</h2>
+      <p style="color:var(--ink-2);line-height:1.6">
+        STO Supply Co is a Northeast Ohio firearms and 2A community — range days, gear talk,
+        training notes and Second Amendment advocacy from Black gun owners in Cleveland.
+        Turn on JavaScript to read the feed.
+      </p>
+    </div>
+  </noscript></main>
 
   <aside class="box game-col" id="gamePanel" aria-label="Bullseye mini game">
     <div class="game-head">
