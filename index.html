@@ -103,7 +103,11 @@ a{color:var(--maroon-lt)}
   grid-template-areas:"profile main game";
   align-items:start;
 }
-.profile-col{grid-area:profile;justify-self:start;width:220px;
+/* The column now runs wider than the card it holds: the brand lockup needs room
+   for the tagline beside the badge, while the profile card stays at its old
+   220px. min() rather than a flat 340px so the lockup shrinks with the gutter
+   on a narrow desktop instead of spilling into the feed. */
+.profile-col{grid-area:profile;justify-self:start;width:min(340px,100%);
   display:flex;flex-direction:column;gap:26px;position:sticky;top:22px}
 /* Mirrors the profile column on the opposite gutter: pinned to its edge, and
    sticky so it stays put while the feed scrolls past it. */
@@ -117,11 +121,17 @@ main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
 /* Deliberately outside the profile card: the badge is the client's identity,
    not one more field in the bio widget, so it sits on the page background with
    real air under it rather than sharing a border with the avatar and blurb. */
-.brand{display:block;line-height:0;align-self:flex-start}
-.brand img{display:block;width:170px;height:auto}
+.brand{display:flex;align-items:center;gap:18px;width:100%;text-decoration:none}
+.brand img{display:block;width:150px;height:auto;flex-shrink:0}
+/* One phrase per line. Set as a run it wraps at arbitrary points beside a
+   150px badge; broken deliberately, the three beats read as the slogan it is. */
+.brand .tagline{margin:0;min-width:0;
+  font-size:12px;line-height:1.75;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--ink-2)}
+.brand .tagline span{display:block;white-space:nowrap}
 
 /* ── profile ─────────────────────────────────────────────── */
-#profile{padding:12px}
+#profile{width:220px;align-self:flex-start;padding:12px}
 #profile .name{font-size:15px;font-weight:700;color:var(--ink);margin-top:9px}
 #profile .role{color:var(--muted);margin-top:1px}
 #profile .bio{color:var(--ink-2);margin-top:8px;line-height:1.55;font-size:12px}
@@ -332,7 +342,7 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 @media (max-width:1000px){
   .page{grid-template-columns:minmax(0,520px);grid-template-areas:"profile" "game" "main";
     justify-content:center}
-  .profile-col{position:static;width:220px;justify-self:center}
+  .profile-col{position:static;width:340px;justify-self:center}
   .game-col{position:static;width:100%;max-width:320px;justify-self:center}
 }
 
@@ -358,6 +368,7 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
         <source srcset="assets/sto-badge-2026.webp" type="image/webp"/>
         <img src="assets/sto-badge-2026.png" alt="STO Supply Co" width="512" height="512"/>
       </picture>
+      <p class="tagline"><span>Be prepared.</span><span>Stay ready.</span><span>Carry every day.</span></p>
     </a>
 
     <aside class="box" id="profile">
