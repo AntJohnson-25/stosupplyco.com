@@ -101,7 +101,7 @@ a{color:var(--maroon-lt)}
   align-items:start;
 }
 .profile-col{grid-area:profile;justify-self:start;width:220px;
-  display:flex;flex-direction:column;gap:18px;position:sticky;top:22px}
+  display:flex;flex-direction:column;gap:26px;position:sticky;top:22px}
 /* Mirrors the profile column on the opposite gutter: pinned to its edge, and
    sticky so it stays put while the feed scrolls past it. */
 /* min() so it shrinks with the gutter on a narrow desktop instead of
@@ -110,11 +110,15 @@ a{color:var(--maroon-lt)}
 main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
 .box{background:var(--surface);border:1px solid var(--line);border-radius:var(--r)}
 
+/* ── brand mark ───────────────────────────────────────────── */
+/* Deliberately outside the profile card: the badge is the client's identity,
+   not one more field in the bio widget, so it sits on the page background with
+   real air under it rather than sharing a border with the avatar and blurb. */
+.brand{display:block;line-height:0;align-self:flex-start}
+.brand img{display:block;width:170px;height:auto}
+
 /* ── profile ─────────────────────────────────────────────── */
 #profile{padding:12px}
-/* Full width of the card. The mark is a 4.8:1 wordmark, so capping it the way
-   the old squarish lockup was capped left a thin, apologetic strip. */
-#profile .logo{display:block;width:100%;height:auto;margin:2px auto 12px}
 #profile .name{font-size:15px;font-weight:700;color:var(--ink);margin-top:9px}
 #profile .role{color:var(--muted);margin-top:1px}
 #profile .bio{color:var(--ink-2);margin-top:8px;line-height:1.55;font-size:12px}
@@ -331,8 +335,11 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 
 @media (max-width:640px){
   .page{grid-template-columns:minmax(0,1fr)}
-  /* The profile card turns horizontal so it does not eat the whole first screen */
-  .profile-col{width:100%;flex-direction:row;align-items:flex-start;gap:12px}
+  /* The profile card turns horizontal so it does not eat the whole first screen.
+     The badge stays stacked above it — laying it beside the card would shrink it
+     past the point where the inner text ring is readable. */
+  .profile-col{width:100%;gap:16px}
+  .brand img{width:120px}
   .carousel{width:110px;flex-shrink:0}
   #profile{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start;width:100%}
   #profileFooter{width:100%}
@@ -343,11 +350,14 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
 <div class="page">
 
   <div class="profile-col">
-    <aside class="box" id="profile">
+    <a class="brand" href="/" id="brandLink" aria-label="STO Supply Co — home">
       <picture>
-        <source srcset="assets/sto-logo.webp" type="image/webp"/>
-        <img class="logo" src="assets/sto-logo.png" alt="STO Supply Co" width="1200" height="249"/>
+        <source srcset="assets/sto-badge-2026.webp" type="image/webp"/>
+        <img src="assets/sto-badge-2026.png" alt="STO Supply Co" width="512" height="512"/>
       </picture>
+    </a>
+
+    <aside class="box" id="profile">
       <div class="carousel" id="profileCarousel">
         <div class="track">
           <div class="slide"><img src="assets/sto-01.jpg" alt="STO Supply Co"/></div>
@@ -1093,6 +1103,7 @@ document.getElementById('composeBtn').addEventListener('click', () => navigate('
 document.getElementById('profileEditBtn').addEventListener('click', () => navigate('/profile-images'));
 document.getElementById('dashboardBtn').addEventListener('click', () => navigate('/dashboard'));
 document.getElementById('feedLink').addEventListener('click', (e) => { e.preventDefault(); navigate('/'); });
+document.getElementById('brandLink').addEventListener('click', (e) => { e.preventDefault(); navigate('/'); });
 
 /* ── data access ─────────────────────────────────────────────────────── */
 async function listPosts(includeDrafts){
@@ -1572,7 +1583,7 @@ function viewProfileEdit(){
   mainEl.innerHTML =
     '<div class="box" id="profileEdit">'
     + '<div class="dash-title" style="margin-top:0">Profile carousel</div>'
-    + '<p class="hint">These are the images beside the logo. Drag order is set with the arrows; '
+    + '<p class="hint">These are the images at the top of the profile card. Drag order is set with the arrows; '
       + 'the carousel rotates every 4 seconds.</p>'
     + '<div class="field" style="margin-top:10px">'
       + '<input type="file" id="peFiles" accept="image/*,video/*" multiple/>'
