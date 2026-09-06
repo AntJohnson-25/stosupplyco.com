@@ -112,9 +112,9 @@ main{grid-area:main;display:flex;flex-direction:column;gap:14px;min-width:0}
 
 /* ── profile ─────────────────────────────────────────────── */
 #profile{padding:12px}
-/* Capped rather than full-bleed: the lockup is wider than it is tall, and at
-   the card's full 196px the wordmark starts to out-shout the profile shot. */
-#profile .logo{display:block;width:100%;max-width:186px;height:auto;margin:0 auto 12px}
+/* Full width of the card. The mark is a 4.8:1 wordmark, so capping it the way
+   the old squarish lockup was capped left a thin, apologetic strip. */
+#profile .logo{display:block;width:100%;height:auto;margin:2px auto 12px}
 #profile .name{font-size:15px;font-weight:700;color:var(--ink);margin-top:9px}
 #profile .role{color:var(--muted);margin-top:1px}
 #profile .bio{color:var(--ink-2);margin-top:8px;line-height:1.55;font-size:12px}
@@ -346,7 +346,7 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
     <aside class="box" id="profile">
       <picture>
         <source srcset="assets/sto-logo.webp" type="image/webp"/>
-        <img class="logo" src="assets/sto-logo.png" alt="STO Supply Co" width="665" height="521"/>
+        <img class="logo" src="assets/sto-logo.png" alt="STO Supply Co" width="1200" height="249"/>
       </picture>
       <div class="carousel" id="profileCarousel">
         <div class="track">
@@ -395,8 +395,8 @@ table.data td{padding:5px 8px;border-bottom:1px solid var(--line)}
       <canvas id="gCanvas"></canvas>
       <div class="reticle" id="gReticle"><span class="ring"></span><span class="dot"></span></div>
       <div class="game-overlay" id="gOverlay">
-        <div class="g-msg" id="gMsg">Bullseye</div>
-        <div class="g-sub" id="gSub">30 seconds. Centre shots score most,<br>and they get faster.</div>
+        <div class="g-msg" id="gMsg">Pop-Up Range</div>
+        <div class="g-sub" id="gSub">30 seconds. Drop them before they drop.<br>Far ones pay triple, vitals pay most.</div>
         <button class="btn" id="gStart">Start</button>
       </div>
     </div>
@@ -468,15 +468,17 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
   document.querySelectorAll('#profileCarousel .slide img')
 ).map(img => ({ kind: 'photo', url: img.getAttribute('src'), alt: img.alt || '' }));
 
-/* ── range mini-game ─────────────────────────────────────────────────
-   Lives in the right gutter and is entirely self-contained: no Supabase, no
-   routing, and it never touches the feed. Runs above the config guard so it
-   still works on a site whose backend is not wired up yet.
+/* ── range mini-game: pop-up deer ────────────────────────────────────
+   An outdoor silhouette range in the right gutter. Entirely self-contained:
+   no Supabase, no routing, it never touches the feed, and it sits above the
+   config guard so it still runs on a site whose backend is not wired up.
 
-   The loop: one target at a time, shrinking. Hit it before it vanishes. The
-   closer to centre the more it scores, consecutive hits build a multiplier,
-   and every hit shortens the next target's life — so the difficulty is set by
-   how well you are already doing, which is what makes it worth another go.  */
+   Steel deer rise from behind cover in three depth lanes, stand for a moment,
+   then drop back down. Hit one and it is knocked flat. The far lane is smaller
+   and pays triple, the vital ring pays most, consecutive hits build a
+   multiplier, and both the standing time and the gap between pop-ups shorten
+   as you score — so the difficulty is set by how well you are already doing,
+   which is what makes it worth another go.                                  */
 (function rangeGame(){
   const panel   = document.getElementById('gamePanel');
   const stage   = document.getElementById('gStage');
@@ -486,29 +488,37 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
   if (!panel || !canvas) return;
   const ctx = canvas.getContext('2d');
 
-  const ROUND_MS   = 30000;
-  const LIFE_START = 1600;   // ms a target lasts at the start of a round
-  const LIFE_MIN   = 620;    // floor, so it stays humanly possible
-  const LIFE_STEP  = 42;     // shaved off per hit
-  // Fraction of the radius each ring covers, and what it pays.
-  const RINGS = [
-    { f: 0.20, pts: 10, key: 'bull' },
-    { f: 0.46, pts: 6 },
-    { f: 0.73, pts: 3 },
-    { f: 1.00, pts: 1 },
+  const ROUND_MS  = 30000;
+  const UP_START  = 1500;   // ms a deer stands before dropping
+  const UP_MIN    = 640;
+  const UP_STEP   = 34;     // shaved off per hit
+  const GAP_START = 900;    // ms between pop-ups
+  const GAP_MIN   = 380;
+  const GAP_STEP  = 24;
+  const MAX_UP    = 3;      // deer on the range at once
+  const RISE_MS   = 190;    // how long the rise/drop animation takes
+
+  // Depth lanes: ground line as a fraction of height, silhouette scale, and
+  // payout. Further away is smaller and harder, so it pays more.
+  // Sized so even the far deer's vital ring is ~9px across on a 274px stage.
+  // Any smaller and the triple payout stops being a challenge and starts being
+  // a lottery.
+  const LANES = [
+    { gy: 0.68, scale: 0.42, mult: 3 },
+    { gy: 0.77, scale: 0.55, mult: 2 },
+    { gy: 0.90, scale: 0.72, mult: 1 },
   ];
 
   const css = getComputedStyle(document.documentElement);
   const COL = {
     cream:  css.getPropertyValue('--ink').trim()       || '#f2efe9',
-    maroon: css.getPropertyValue('--maroon').trim()    || '#7a1f2b',
     bright: css.getPropertyValue('--maroon-lt').trim() || '#a83244',
     muted:  css.getPropertyValue('--muted').trim()     || '#8a8378',
   };
 
-  /* A dead-centre hit rings a bell. Synthesised rather than an audio file so
-     it costs no request and cannot fail to load. The context is built lazily on
-     the first shot — browsers refuse to start audio before a user gesture. */
+  /* A vital hit rings a bell. Synthesised rather than an audio file so it costs
+     no request and cannot fail to load. The context is built lazily on the
+     first shot — browsers refuse to start audio before a user gesture. */
   let audio = null, muted = false;
   try { muted = localStorage.getItem('sto_range_muted') === '1'; } catch(e){}
 
@@ -521,7 +531,6 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
       if (audio.state === 'suspended') audio.resume();
       const t = audio.currentTime;
       const out = audio.createGain();
-      // exponential ramps, so it reads as a struck bell rather than a click
       out.gain.setValueAtTime(0.0001, t);
       out.gain.exponentialRampToValueAtTime(0.20, t + 0.006);
       out.gain.exponentialRampToValueAtTime(0.0001, t + 0.40);
@@ -538,50 +547,199 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
     } catch(e){}
   }
 
-  let W = 0, H = 0, rMax = 34;      // stage size and spawn radius, in CSS px
-  let mode = 'idle';                // idle | playing | over
-  let target = null, holes = [], pops = [];
-  let score = 0, combo = 0, hits = 0, best = 0, roundEnd = 0, raf = null;
+  let W = 0, H = 0, dpr = 1, scene = null;
+  let mode = 'idle';                 // idle | playing | over
+  let deer = [], holes = [], pops = [];
+  let score = 0, combo = 0, hits = 0, best = 0, roundEnd = 0, nextPop = 0, raf = null;
 
   try { best = Number(localStorage.getItem('sto_range_best')) || 0; } catch(e){}
   document.getElementById('gBest').textContent = best;
 
-  // Canvas is sized in device pixels but drawn in CSS pixels, so the rings stay
-  // sharp on a retina screen without any coordinate maths in the draw code.
+  /* ── the scene ─────────────────────────────────────────────────────────
+     Sky, ridge, treeline and ground never change, so they are rendered once
+     into an offscreen canvas and blitted each frame. Seeded randomness keeps
+     the same hills and trees across a resize instead of reshuffling them. */
+  function rng(seed){ return () => (seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+  function buildScene(){
+    const c = document.createElement('canvas');
+    c.width = Math.round(W * dpr); c.height = Math.round(H * dpr);
+    const g = c.getContext('2d');
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const rand = rng(20230607);
+
+    const sky = g.createLinearGradient(0, 0, 0, H * 0.72);
+    sky.addColorStop(0,    '#101725');
+    sky.addColorStop(0.50, '#33304a');
+    sky.addColorStop(0.80, '#7d5442');
+    sky.addColorStop(1,    '#c0834f');
+    g.fillStyle = sky; g.fillRect(0, 0, W, H);
+
+    const sun = g.createRadialGradient(W * 0.70, H * 0.58, 2, W * 0.70, H * 0.58, H * 0.30);
+    sun.addColorStop(0,    'rgba(255,216,155,.90)');
+    sun.addColorStop(0.22, 'rgba(232,148,84,.45)');
+    sun.addColorStop(1,    'rgba(232,148,84,0)');
+    g.fillStyle = sun; g.fillRect(0, 0, W, H);
+
+    // Far ridge: one soft wave of hills.
+    g.fillStyle = '#2b2c3a';
+    g.beginPath(); g.moveTo(0, H);
+    for (let x = 0; x <= W; x += 6){
+      g.lineTo(x, H * 0.575 - Math.sin(x / (W * 0.38) * Math.PI * 2) * H * 0.022
+                            - rand() * H * 0.006);
+    }
+    g.lineTo(W, H); g.closePath(); g.fill();
+
+    // Treeline: pines of varying height along the horizon.
+    g.fillStyle = '#141d18';
+    for (let x = -6; x < W + 10; x += 5 + rand() * 5){
+      // Tall enough to tower over the far lane's deer. Trees shorter than the
+      // quarry read as scrub and flatten the depth the lanes are selling.
+      const th = H * (0.11 + rand() * 0.09), base = H * 0.625, hw = th * 0.34;
+      g.beginPath();
+      g.moveTo(x, base); g.lineTo(x + hw, base - th); g.lineTo(x + hw * 2, base);
+      g.closePath(); g.fill();
+    }
+    g.fillRect(0, H * 0.615, W, H * 0.03);
+
+    const ground = g.createLinearGradient(0, H * 0.60, 0, H);
+    ground.addColorStop(0, '#333a27');
+    ground.addColorStop(1, '#14170f');
+    g.fillStyle = ground; g.fillRect(0, H * 0.635, W, H * 0.365);
+    return c;
+  }
+
+  /* Grass the deer stand behind. Drawn over each lane's ground line so the
+     clip edge the deer rises through never shows as a hard cut. */
+  function cover(g, gy, scale, seed, toBottom){
+    const rand = rng(seed);
+    g.fillStyle = '#1a2214';
+    // Only a band, except for the nearest lane. Filling to the bottom on every
+    // lane would paint flat green over the scene's receding ground gradient.
+    g.fillRect(0, gy, W, toBottom ? H - gy : Math.max(5, 9 * scale));
+    g.beginPath();
+    for (let x = -4; x < W + 6; x += 3 + rand() * 3){
+      const th = (6 + rand() * 12) * scale;
+      g.moveTo(x, gy + 2);
+      g.lineTo(x + 1.6 * scale + 0.8, gy - th);
+      g.lineTo(x + 3.4 * scale + 1.6, gy + 2);
+    }
+    g.fill();
+  }
+
+  /* ── the deer ──────────────────────────────────────────────────────────
+     Drawn in a unit space 120 wide and 116 tall with the hooves at y=0 and
+     the antler tips at y=-116, so one path serves every lane at any scale. */
+  function drawDeer(g, d){
+    g.save();
+    g.translate(d.x, d.gy);
+    if (d.knock) {              // knocked-down plate: pivots on its base
+      g.translate(0, -2 * d.scale);
+      g.rotate(d.knock * 1.35);
+      g.translate(0, 2 * d.scale);
+    }
+    g.translate(0, d.drop);
+    g.scale(d.scale, d.scale);
+
+    g.fillStyle = d.flash > 0 ? '#7a5c3a' : '#1d1712';
+    g.strokeStyle = g.fillStyle;
+    g.lineJoin = 'round'; g.lineCap = 'round';
+
+    // legs
+    [[34, 40], [46, 52], [76, 82], [88, 94]].forEach(([x0, x1]) => {
+      g.fillRect(x0, -48, x1 - x0, 48);
+    });
+    // body, chest and rump as overlapping ellipses
+    g.beginPath();
+    g.ellipse(64, -60, 32, 18, 0, 0, Math.PI * 2);
+    g.ellipse(46, -58, 17, 16, 0, 0, Math.PI * 2);
+    g.ellipse(86, -60, 17, 17, 0, 0, Math.PI * 2);
+    g.fill();
+    // neck
+    g.beginPath();
+    g.moveTo(42, -66); g.lineTo(30, -92); g.lineTo(20, -90); g.lineTo(36, -56);
+    g.closePath(); g.fill();
+    // head and muzzle
+    g.beginPath();
+    g.ellipse(21, -93, 13, 6.5, -0.38, 0, Math.PI * 2);
+    g.fill();
+    g.beginPath();
+    g.moveTo(14, -96); g.lineTo(3, -92); g.lineTo(6, -86); g.lineTo(16, -88);
+    g.closePath(); g.fill();
+    // ear
+    g.beginPath();
+    g.moveTo(26, -98); g.lineTo(33, -107); g.lineTo(29, -94);
+    g.closePath(); g.fill();
+    // antlers
+    g.lineWidth = 3.4;
+    g.beginPath();
+    g.moveTo(24, -99); g.lineTo(20, -112); g.lineTo(13, -116);
+    g.moveTo(21.4, -107); g.lineTo(12, -110);
+    g.moveTo(23, -103); g.lineTo(15, -104);
+    g.moveTo(26, -99); g.lineTo(31, -110); g.lineTo(38, -113);
+    g.moveTo(29.2, -105); g.lineTo(37, -107);
+    g.stroke();
+    // tail
+    g.beginPath();
+    g.moveTo(100, -70); g.lineTo(108, -66); g.lineTo(100, -60);
+    g.closePath(); g.fill();
+
+    // Rim light along the top edge so it reads as a steel plate catching the
+    // last of the sun rather than a flat hole in the scene.
+    g.strokeStyle = 'rgba(226,178,120,.5)';
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(42, -72); g.lineTo(56, -76);
+    g.moveTo(60, -77); g.lineTo(84, -74);
+    g.stroke();
+
+    // vital ring, faintly marked as it would be on a scoring plate
+    g.strokeStyle = d.flash > 0 ? 'rgba(255,220,180,.85)' : 'rgba(190,160,130,.30)';
+    g.lineWidth = 2;
+    g.beginPath(); g.arc(54, -64, 11, 0, Math.PI * 2); g.stroke();
+
+    g.restore();
+  }
+
+  // Hit zones in the same unit space. Ordered best-first.
+  function zoneAt(ux, uy){
+    if (Math.hypot(ux - 54, uy + 64) <= 11)  return { pts: 10, key: 'vital', label: 'VITAL' };
+    if (Math.hypot(ux - 21, uy + 93) <= 15)  return { pts: 8,  key: 'head',  label: 'HEAD' };
+    if (Math.hypot((ux - 66) / 36, (uy + 60) / 21) <= 1) return { pts: 5, key: 'body', label: 'HIT' };
+    if (ux >= 30 && ux <= 96 && uy >= -50 && uy <= 2)    return { pts: 2, key: 'leg',  label: 'LOW' };
+    return null;
+  }
+
   function resize(){
     const r = stage.getBoundingClientRect();
     if (!r.width) return;
     W = r.width; H = r.height;
-    // Proportional to the stage, so a phone and a wide desktop pose the same
-    // aiming problem rather than the small screen being brutally harder.
-    rMax = Math.max(24, Math.min(46, W * 0.155));
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = Math.round(W * dpr);
     canvas.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    scene = buildScene();
     draw();
   }
 
   function multiplier(){ return Math.min(1 + Math.floor(combo / 4), 5); }
 
-  function spawn(){
-    const life = Math.max(LIFE_MIN, LIFE_START - hits * LIFE_STEP);
-    const m = rMax + 6;
-    // Never land on top of the previous target — that would let a lucky
-    // double-click score twice without aiming.
-    let x, y, tries = 0;
+  function popUp(){
+    const li = Math.floor(Math.random() * LANES.length);
+    const lane = LANES[li];
+    const scale = lane.scale * (H / 274);       // lanes were tuned at a 274px stage
+    const margin = 60 * scale;
+    let x, tries = 0;
     do {
-      x = m + Math.random() * (W - m * 2);
-      y = m + Math.random() * (H - m * 2);
+      x = margin + Math.random() * (W - margin * 2);
       tries++;
-    } while (target && tries < 12 && Math.hypot(x - target.x, y - target.y) < rMax * 1.8);
-    target = { x, y, born: performance.now(), life };
-  }
-
-  function radiusNow(now){
-    if (!target) return 0;
-    const t = (now - target.born) / target.life;
-    return t >= 1 ? 0 : rMax * (1 - t);
+    } while (tries < 10 && deer.some(o => o.lane === li && Math.abs(o.x - x) < 90 * scale));
+    deer.push({
+      lane: li, x, gy: H * lane.gy, scale, mult: lane.mult,
+      born: performance.now(),
+      up: Math.max(UP_MIN, UP_START - hits * UP_STEP),
+      drop: 116 * scale, knock: 0, flash: 0, dead: false,
+    });
   }
 
   function setHud(){
@@ -593,50 +751,51 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
   }
 
   function draw(){
-    if (!W) return;
+    if (!W || !scene) return;
+    const now = performance.now();
     ctx.clearRect(0, 0, W, H);
+    ctx.drawImage(scene, 0, 0, W, H);
 
-    // Faint range backdrop so an idle panel is not a black square.
-    ctx.strokeStyle = 'rgba(255,255,255,.045)';
-    ctx.lineWidth = 1;
-    for (let i = 1; i < 4; i++){
-      ctx.beginPath(); ctx.moveTo(0, H * i / 4); ctx.lineTo(W, H * i / 4); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(W * i / 4, 0); ctx.lineTo(W * i / 4, H); ctx.stroke();
+    // Two slow clouds, the only thing moving when the range is idle.
+    ctx.fillStyle = 'rgba(198,168,178,.13)';
+    for (let i = 0; i < 2; i++){
+      const cw = W * (0.42 + i * 0.16);
+      const cx = ((now / (26000 + i * 9000) + i * 0.55) % 1.4 - 0.2) * (W + cw) - cw / 2;
+      const cy = H * (0.16 + i * 0.13);
+      ctx.beginPath();
+      ctx.ellipse(cx, cy, cw * 0.30, H * 0.030, 0, 0, Math.PI * 2);
+      ctx.ellipse(cx + cw * 0.16, cy - H * 0.014, cw * 0.20, H * 0.024, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
 
-    const now = performance.now();
+    // Back to front, so a near deer overlaps a far one and each lane's grass
+    // hides the edge its deer rises through.
+    LANES.forEach((lane, i) => {
+      const gy = H * lane.gy;
+      ctx.save();
+      ctx.beginPath(); ctx.rect(0, 0, W, gy); ctx.clip();
+      deer.filter(d => d.lane === i).forEach(d => drawDeer(ctx, d));
+      ctx.restore();
+      cover(ctx, gy, (H / 274) * (0.5 + i * 0.35), 991 + i * 37, i === LANES.length - 1);
+    });
 
     for (const h of holes){
-      const age = (now - h.t) / 2600;
+      const age = (now - h.t) / 2200;
       if (age >= 1) continue;
-      ctx.globalAlpha = 0.75 * (1 - age);
-      ctx.fillStyle = '#0a0a0a';
-      ctx.beginPath(); ctx.arc(h.x, h.y, 3.1, 0, Math.PI * 2); ctx.fill();
-      ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.arc(h.x, h.y, 3.6, 0, Math.PI * 2); ctx.stroke();
+      ctx.globalAlpha = 0.6 * (1 - age);
+      ctx.fillStyle = '#0b0b09';
+      ctx.beginPath(); ctx.arc(h.x, h.y, 2.6, 0, Math.PI * 2); ctx.fill();
       ctx.globalAlpha = 1;
     }
 
-    if (mode === 'playing' && target){
-      const r = radiusNow(now);
-      if (r > 0.5){
-        for (let i = RINGS.length - 1; i >= 0; i--){
-          ctx.fillStyle = i % 2 ? COL.cream : COL.maroon;
-          ctx.beginPath(); ctx.arc(target.x, target.y, r * RINGS[i].f, 0, Math.PI * 2); ctx.fill();
-        }
-        ctx.fillStyle = COL.bright;
-        ctx.beginPath(); ctx.arc(target.x, target.y, r * 0.09, 0, Math.PI * 2); ctx.fill();
-      }
-    }
-
     for (const p of pops){
-      const age = (now - p.t) / 620;
+      const age = (now - p.t) / 700;
       if (age >= 1) continue;
       ctx.globalAlpha = 1 - age;
       ctx.fillStyle = p.good ? COL.cream : COL.muted;
-      ctx.font = '700 ' + (p.good ? 13 : 11) + 'px ' + css.getPropertyValue('--font');
+      ctx.font = '700 ' + (p.good ? 12 : 10.5) + 'px ' + css.getPropertyValue('--font');
       ctx.textAlign = 'center';
-      ctx.fillText(p.text, p.x, p.y - age * 16);
+      ctx.fillText(p.text, p.x, p.y - age * 18);
       ctx.globalAlpha = 1;
     }
   }
@@ -645,7 +804,30 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
     if (mode !== 'playing'){ raf = null; draw(); return; }
     const now = performance.now();
     if (now >= roundEnd){ endRound(); return; }
-    if (radiusNow(now) <= 0.5){ combo = 0; spawn(); }   // it got away
+
+    for (const d of deer){
+      const age = now - d.born;
+      if (d.flash > 0) d.flash -= 16;
+      if (d.dead){
+        d.knock = Math.min(1, d.knock + 0.16);        // fall flat, then clear
+      } else if (age < RISE_MS){
+        d.drop = 116 * d.scale * (1 - age / RISE_MS); // rising
+      } else if (age < RISE_MS + d.up){
+        d.drop = 0;                                   // standing
+      } else {
+        const t = (age - RISE_MS - d.up) / RISE_MS;
+        d.drop = 116 * d.scale * Math.min(1, t);      // dropping back
+        if (t >= 1){ d.gone = true; combo = 0; }      // it got away
+      }
+    }
+    deer = deer.filter(d => !d.gone && !(d.dead && d.knock >= 1));
+
+    const standing = deer.filter(d => !d.dead).length;
+    if (now >= nextPop && standing < MAX_UP){
+      popUp();
+      nextPop = now + Math.max(GAP_MIN, GAP_START - hits * GAP_STEP) * (0.75 + Math.random() * 0.5);
+    }
+
     setHud();
     draw();
     raf = requestAnimationFrame(tick);
@@ -660,42 +842,42 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
     const x = e.clientX - r.left, y = e.clientY - r.top;
 
     reticle.classList.remove('recoil');
-    void reticle.offsetWidth;            // restart the animation
+    void reticle.offsetWidth;
     reticle.classList.add('recoil');
 
     holes.push({ x, y, t: performance.now() });
-    if (holes.length > 14) holes.shift();
+    if (holes.length > 12) holes.shift();
 
-    const rad = radiusNow(performance.now());
-    const d = target ? Math.hypot(x - target.x, y - target.y) : Infinity;
-    if (!target || rad <= 0.5 || d > rad){
-      combo = 0;
-      pops.push({ x, y, t: performance.now(), text: 'miss', good: false });
+    // Nearest lane first: a near deer drawn over a far one should take the hit.
+    const live = deer.filter(d => !d.dead && d.drop < 8).sort((a, b) => b.lane - a.lane);
+    for (const d of live){
+      const ux = (x - d.x) / d.scale;
+      const uy = (y - (d.gy + d.drop)) / d.scale;
+      const z = zoneAt(ux, uy);
+      if (!z) continue;
+      const gained = z.pts * d.mult * multiplier();
+      score += gained; combo++; hits++;
+      d.dead = true; d.flash = 90;
+      if (z.key === 'vital') ding();
+      pops.push({ x, y: d.gy + d.drop - 40 * d.scale, t: performance.now(),
+                  text: z.label + ' +' + gained, good: true });
+      if (pops.length > 6) pops.shift();
       setHud();
       return;
     }
-    const f = d / rad;
-    const ring = RINGS.find(rg => f <= rg.f) || RINGS[RINGS.length - 1];
-    const gained = ring.pts * multiplier();
-    score += gained;
-    combo++;
-    hits++;
-    if (ring.key === 'bull') ding();
-    pops.push({ x, y, t: performance.now(),
-                text: (ring.key === 'bull' ? 'BULL +' : '+') + gained, good: true });
-    if (pops.length > 8) pops.shift();
-    spawn();
+    combo = 0;
+    pops.push({ x, y, t: performance.now(), text: 'miss', good: false });
     setHud();
   }
 
   function start(){
-    score = 0; combo = 0; hits = 0; holes = []; pops = [];
+    score = 0; combo = 0; hits = 0; deer = []; holes = []; pops = [];
     mode = 'playing';
     roundEnd = performance.now() + ROUND_MS;
+    nextPop = 0;
     overlay.hidden = true;
     stage.classList.add('armed');
     resize();
-    spawn();
     setHud();
     // Always cancel-and-reschedule. Guarding on `if (!raf)` looks equivalent
     // but is not: a backgrounded tab never fires its pending frame, so `raf`
@@ -706,7 +888,7 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
 
   function endRound(){
     mode = 'over';
-    target = null;
+    deer = [];
     if (raf){ cancelAnimationFrame(raf); raf = null; }
     stage.classList.remove('armed');
     if (score > best){
@@ -717,7 +899,7 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
     document.getElementById('gMsg').textContent = score + ' points';
     document.getElementById('gSub').innerHTML =
       (score >= best && score > 0 ? 'New best.' : 'Best ' + best + '.')
-      + '<br>' + hits + ' hit' + (hits === 1 ? '' : 's') + ' in 30 seconds.';
+      + '<br>' + hits + ' deer down in 30 seconds.';
     document.getElementById('gStart').textContent = 'Again';
     overlay.hidden = false;
     document.getElementById('gTime').textContent = '0';
@@ -738,13 +920,13 @@ const DEFAULT_PROFILE_MEDIA = Array.from(
   function paintMute(){
     muteBtn.textContent = muted ? '🔇' : '🔊';
     muteBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
-    muteBtn.title = muted ? 'Unmute the bullseye bell' : 'Mute the bullseye bell';
+    muteBtn.title = muted ? 'Unmute the vital-hit bell' : 'Mute the vital-hit bell';
   }
   muteBtn.addEventListener('click', () => {
     muted = !muted;
     try { localStorage.setItem('sto_range_muted', muted ? '1' : '0'); } catch(e){}
     paintMute();
-    if (!muted) ding();          // confirm it is back on
+    if (!muted) ding();
   });
   paintMute();
 
